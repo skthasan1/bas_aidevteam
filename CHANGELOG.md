@@ -2,6 +2,10 @@
 
 Purpose: the release history of Build@Scale AI Dev Team. Newest first.
 
+## Unreleased
+
+- `tools/app-token.mjs`: gets a one-hour GitHub App installation token from the App's ID and private key file, so an AI can act as its own App instead of a person's login. The key is never printed; only the token is.
+
 ## 0.2.0 - 2026-10-31
 
 Keeping the kit current, and policy that fits real teams.
