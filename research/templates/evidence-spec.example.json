@@ -1,0 +1,43 @@
+{
+  "title": "Acme Notes example: exact text and handwriting look",
+  "heading": "Which ideas from this source should go into the pipeline?",
+  "description": "Evidence page for the ideas tested from one outside source (fictional example).",
+  "meta": ["1 Jan 2027", "2 tests", "spent $2.10 of the $5 stop", "run by Developer A, written by the researcher"],
+  "lede": "What we read, what we tested, what we saw. Small samples: evidence, not statistics.",
+  "blind": false,
+  "board": {
+    "intro": "One row per idea. Adopt = build; Test more = promising; Drop; Fix = a defect found on the way; Inconclusive = the test could not answer.",
+    "rows": [
+      { "idea": "Quote exact text in the prompt plus a reference picture", "verdict": "adopt", "evidence": "Sign read correctly in 3 of 3 (T1) against an invented word without it.", "owner": "Prompt owner", "action": "issue: <org>/<repo>#<n>" },
+      { "idea": "Hard cuts inside one clip", "verdict": "more", "evidence": "Cast changed between shots in 2 of 2 (T2).", "owner": "Owner", "action": "issue: <org>/<repo>#<n>" }
+    ]
+  },
+  "sections": [
+    {
+      "tag": "T1", "title": "Exact on-screen text", "cost": "6 pictures, $0.30",
+      "text": "Variant A: a sign described vaguely. Variant B: the exact text in quotes plus the sign's reference picture.",
+      "question": "Is the sign's text right?",
+      "layout": "pair",
+      "items": [
+        { "kind": "image", "path": "media/T1-1-A.png", "caption": "A: vague wording" },
+        { "kind": "image", "path": "media/T1-1-B.png", "caption": "B: exact text and reference" }
+      ]
+    },
+    {
+      "tag": "T2", "title": "Cuts inside one clip", "cost": "4 clips, $1.80",
+      "layout": "pair",
+      "items": [
+        { "kind": "video", "path": "media/T2-1-A.mp4", "caption": "A: single shot" },
+        { "kind": "video", "path": "media/T2-1-B.mp4", "caption": "B: hard cuts" }
+      ]
+    }
+  ],
+  "review": {
+    "compare": "Only used when blind is true. Two ways of doing the same thing, shown in shuffled order.",
+    "questions": ["Does the result match the description?"],
+    "guess": "Which one do you think used the new wording?",
+    "cues": "If you notice anything odd, write it down.",
+    "people": 4,
+    "scale": "1 (worst) to 5 (best)"
+  }
+}

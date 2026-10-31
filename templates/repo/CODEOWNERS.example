@@ -1,0 +1,33 @@
+# Purpose: example CODEOWNERS file. Copy to .github/CODEOWNERS, replace every placeholder, delete these comments you do not need.
+# The last matching pattern wins, so put general rules first and specific rules last.
+# Use handles of people or teams that have write access. Do not list an AI account as the only owner
+# of a sensitive path: the protocol requires a named person's own read for T2 and T3 changes.
+
+# Default: every file needs the owner of the repository
+*                               @<org>/<owners-team>
+
+# Documentation (T0): the docs owner
+/docs/                          @<docs-owner-handle>
+*.md                            @<docs-owner-handle>
+
+# Application code (T1): the area owners
+/src/                           @<area-owner-handle>
+/tests/                         @<area-owner-handle>
+
+# Always a named person (T2 and T3 areas)
+# Money, quotas, billing
+/src/billing/                   @<money-owner-handle>
+# Prompts and model instructions
+/prompts/                       @<prompt-owner-handle>
+# Data shape: schema and migrations
+/migrations/                    @<data-owner-handle>
+# Authentication, authorisation, secrets handling
+/src/auth/                      @<security-owner-handle>
+# Dependencies
+/package.json                   @<security-owner-handle>
+/pnpm-lock.yaml                 @<security-owner-handle>
+# CI, workflows, security configuration, this file
+/.github/                       @<security-owner-handle>
+/.github/CODEOWNERS             @<owner-handle>
+# Production and deployment configuration
+/deploy/                        @<owner-handle>

@@ -1,0 +1,11 @@
+{
+  "note": "Generic placeholders. Copy to tools/public-denylist.json (git-ignored) or keep the real list outside the repository and pass it with --denylist <path>. Whole words, case-insensitive.",
+  "terms": [
+    "ExamplePersonOne",
+    "ExamplePersonTwo",
+    "example-private-handle",
+    "ExampleProductOne",
+    "ExampleProductTwo",
+    "ExampleOrganization"
+  ]
+}

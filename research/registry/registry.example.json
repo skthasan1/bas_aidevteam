@@ -1,0 +1,53 @@
+{
+  "note": "Fictional example entries for the product Acme Notes. Edit a real registry with research/tools/registry.mjs.",
+  "tests": [
+    {
+      "id": "R-001-T1",
+      "source": "R-001",
+      "date": "2027-01-05",
+      "idea": "Quote the exact title text in the prompt for generated cover images",
+      "question": "Does the cover show the title spelled correctly?",
+      "models": "Image model X",
+      "variants": "vague wording vs exact quoted text",
+      "sample": "6 pictures per variant",
+      "cost": 0.3,
+      "status": "judged",
+      "result": "Title correct in 6 of 6 with quotes; 2 of 6 without. Small sample: evidence, not statistics. Verdict: Adopt.",
+      "evidence": "reports/r-001-cover-text.md and evidence/r-001.json",
+      "tags": ["images", "text", "prompt"],
+      "action": "issue: <org>/<repo>#<n> (prompt change, prompt owner)"
+    },
+    {
+      "id": "R-001-T2",
+      "source": "R-001",
+      "date": "2027-01-05",
+      "idea": "Add a handwritten font look to note cards",
+      "question": "Do reviewers prefer the handwritten look?",
+      "models": "n/a",
+      "variants": "plain vs handwritten",
+      "sample": "4 reviewers, 8 cards",
+      "cost": null,
+      "status": "judged",
+      "result": "No preference in 3 of 4 reviewers. Verdict: Drop.",
+      "evidence": "reports/r-001-handwriting.md",
+      "tags": ["ui", "taste", "blind"],
+      "action": "no action: no preference shown, not worth the build cost"
+    },
+    {
+      "id": "R-002-T1",
+      "source": "R-002",
+      "date": "2027-01-12",
+      "idea": "Summarise long notes with a two-step outline-first prompt",
+      "question": "Is the outline-first summary judged better by people?",
+      "models": "Text model Y",
+      "variants": "single step vs outline first",
+      "sample": "10 notes",
+      "cost": 1.2,
+      "status": "run-pending-judges",
+      "result": "",
+      "evidence": "",
+      "tags": ["summary", "prompt", "blind"],
+      "action": ""
+    }
+  ]
+}

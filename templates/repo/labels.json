@@ -1,0 +1,39 @@
+[
+  { "name": "priority:P0", "color": "b60205", "description": "Production harmed or data or secrets at risk. Drop other work." },
+  { "name": "priority:P1", "color": "d93f0b", "description": "A real user path is broken or a release is blocked. This iteration." },
+  { "name": "priority:P2", "color": "fbca04", "description": "Important, not urgent. Scheduled." },
+  { "name": "priority:P3", "color": "0e8a16", "description": "Nice to have, polish, later." },
+
+  { "name": "severity:critical", "color": "b60205", "description": "Finding severity: critical (same as P0)." },
+  { "name": "severity:high", "color": "d93f0b", "description": "Finding severity: high (same as P1)." },
+  { "name": "severity:medium", "color": "fbca04", "description": "Finding severity: medium (same as P2)." },
+  { "name": "severity:low", "color": "0e8a16", "description": "Finding severity: low (same as P3)." },
+  { "name": "severity:info", "color": "c5def5", "description": "Finding severity: informational." },
+
+  { "name": "type:bug", "color": "d73a4a", "description": "Something works wrongly." },
+  { "name": "type:finding", "color": "5319e7", "description": "Review, audit, QA or security finding." },
+  { "name": "type:task", "color": "1d76db", "description": "Planned work with one owner." },
+  { "name": "candidate", "color": "bfd4f2", "description": "Possible finding, not yet confirmed." },
+  { "name": "tester-found", "color": "f9d0c4", "description": "Found by the QA role in a test round." },
+
+  { "name": "area:frontend", "color": "ededed", "description": "User interface." },
+  { "name": "area:backend", "color": "ededed", "description": "Server code and APIs." },
+  { "name": "area:data", "color": "ededed", "description": "Schema, migrations, stored data." },
+  { "name": "area:infra", "color": "ededed", "description": "CI, deployment, environments." },
+  { "name": "area:docs", "color": "ededed", "description": "Documentation." },
+  { "name": "area:security", "color": "ededed", "description": "Security and compliance." },
+
+  { "name": "tier:T0", "color": "c2e0c6", "description": "Docs only. One clearance." },
+  { "name": "tier:T1", "color": "bfdadc", "description": "Ordinary code with tests. One clearance and green CI." },
+  { "name": "tier:T2", "color": "fef2c0", "description": "Money, prompts, data shape, dependencies, deployment, CI. A named person reads the exact head." },
+  { "name": "tier:T3", "color": "f9c5c5", "description": "Auth, secrets, security configuration, production, deleting data, access. Person plus security clearance." },
+
+  { "name": "status:new", "color": "ffffff", "description": "Not yet triaged." },
+  { "name": "status:ready", "color": "0e8a16", "description": "Owner and acceptance check set. Can be started." },
+  { "name": "status:in-progress", "color": "1d76db", "description": "A branch exists." },
+  { "name": "status:in-review", "color": "5319e7", "description": "Pull request open." },
+  { "name": "status:needs-qa", "color": "fbca04", "description": "Waiting for the QA role to test the head." },
+  { "name": "status:needs-person", "color": "d93f0b", "description": "Waiting for a named person's decision or read." },
+  { "name": "status:blocked", "color": "b60205", "description": "Cannot proceed. The comment says why." },
+  { "name": "status:wont-fix", "color": "cccccc", "description": "Closed with a written reason." }
+]

@@ -1,0 +1,70 @@
+{
+  "organization": "acme",
+  "owner": {
+    "name": "Dana",
+    "handles": [
+      "dana-owner"
+    ]
+  },
+  "roles": [
+    {
+      "name": "tech-lead",
+      "account": "acme-techlead-bot"
+    },
+    {
+      "name": "ai-developer",
+      "account": "acme-dev-bot"
+    },
+    {
+      "name": "qa-lead",
+      "account": "acme-qa-bot"
+    },
+    {
+      "name": "researcher",
+      "account": "acme-research-bot"
+    }
+  ],
+  "projects": {
+    "notes": {
+      "name": "Acme Notes",
+      "default": "acme/notes-web",
+      "repos": {
+        "web": "acme/notes-web",
+        "api": "acme/notes-api"
+      },
+      "owners": [
+        "dana-owner"
+      ],
+      "testing": "active",
+      "watch": "review"
+    },
+    "tasks": {
+      "name": "Acme Tasks",
+      "default": "acme/tasks",
+      "repos": {
+        "tasks": "acme/tasks"
+      },
+      "owners": [
+        "dana-owner",
+        "sam-dev"
+      ],
+      "testing": "later",
+      "watch": "off"
+    }
+  },
+  "bots": [
+    "dependabot[bot]",
+    "github-actions[bot]"
+  ],
+  "ai_comment_prefixes": [
+    "Reviewed by",
+    "QA report by",
+    "Cleared by"
+  ],
+  "ai_accounts": [
+    "acme-techlead-bot",
+    "acme-dev-bot",
+    "acme-qa-bot",
+    "acme-research-bot"
+  ]
+}

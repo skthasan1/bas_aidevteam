@@ -1,0 +1,49 @@
+{
+  "note": "Example config. Which repos belong to which project, who owns the code (GitHub handles), whether the QA lead tests it (testing: active | hold | later), and how the tech lead watches pull requests (watch: merge | review | off). Fictional names only; replace everything.",
+  "projects": {
+    "acme-notes": {
+      "name": "Acme Notes",
+      "default": "acme-org/notes",
+      "repos": {
+        "notes": "acme-org/notes",
+        "notes-api": "acme-org/notes-api"
+      },
+      "owners": ["dana-owner"],
+      "testing": "active",
+      "watch": "merge",
+      "note": "Web app and API. Pull requests from the AI developer are tested before merge; human developers' work is tested after merge."
+    },
+    "acme-mobile": {
+      "name": "Acme Mobile",
+      "default": "acme-org/mobile",
+      "repos": {
+        "mobile": "acme-org/mobile"
+      },
+      "owners": ["dana-owner", "dev-a"],
+      "testing": "later",
+      "watch": "review",
+      "note": "Review and report only until the owner says merge."
+    },
+    "acme-labs": {
+      "name": "Acme Labs",
+      "default": "acme-org/labs",
+      "repos": {
+        "labs": "acme-org/labs"
+      },
+      "owners": ["dev-b"],
+      "testing": "hold",
+      "watch": "off",
+      "confidential": true,
+      "note": "On pause. Confidential from other projects: findings and reports stay in the hub; never name it elsewhere."
+    }
+  },
+  "roles": {
+    "tech-lead": { "github": "acme-techlead-bot" },
+    "ai-developer": { "github": "acme-dev-bot", "folder": "<worktree-path>", "ports": [3100, 3101] },
+    "qa-lead": { "github": "acme-qa-bot", "access": "read" },
+    "security-lead": { "github": "acme-sec-bot", "access": "read" },
+    "researcher": { "github": "acme-research-bot" }
+  },
+  "excluded_areas": ["login", "payments", "database schema and migrations", "deployment", "production config"],
+  "deadline_rule": { "enabled": false, "project": "acme-notes", "hours": 12 }
+}

@@ -1,0 +1,8 @@
+node_modules/
+.private/
+.state/
+.watch/
+*.state.json
+.env
+.env.*
+tools/public-denylist.json

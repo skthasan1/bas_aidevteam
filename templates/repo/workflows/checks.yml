@@ -1,0 +1,99 @@
+# Purpose: generic baseline CI for a pull request: secrets scan of the PR's own commits, install, lint, typecheck, test, build, audit (report only).
+#
+# BEFORE YOU USE THIS FILE (the owner must do these):
+#   1. Pin every action by full commit hash. Where you see "PIN-BY-HASH", look up the
+#      release you trust on that action's repository, copy the full 40-character commit hash,
+#      and write it after the @ with the version as a trailing comment. Never leave a tag or branch name.
+#   2. Set the package manager and Node version below to what your repository uses.
+#   3. Make sure the repository's package.json has scripts named: lint, typecheck, test, build.
+#      Rename the commands below if yours differ.
+#   4. Inputs the owner must set (repository settings, not in this file):
+#        - Repository variable NODE_VERSION (optional): the Node version to use. Default below is a placeholder.
+#        - Any environment values your tests need: put FIXED, PUBLIC, FAKE test values in the "env:" of the test step.
+#          Never put a real key, token or password in this file or in a repository variable that tests read.
+#        - Branch protection: require this workflow's "check" job to pass before merge (done in repository settings by the owner).
+#   5. This workflow never deploys and never reads a production secret. Keep it that way.
+
+name: checks
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+# Read-only token. No job here writes to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  secrets-scan:
+    name: Secrets scan of this pull request's commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@PIN-BY-HASH # actions/checkout, pin by hash, note the version here
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Run gitleaks on the commits in this pull request only
+        # Scans only the commits that are in the PR, not the whole history, so old findings do not block new work.
+        # Install gitleaks from a release you have verified (pin its version and checksum), or use a pinned action.
+        run: |
+          set -eu
+          # Replace the next line with your verified install of gitleaks.
+          command -v gitleaks >/dev/null 2>&1 || { echo "gitleaks is not installed: the owner must add a pinned install step"; exit 1; }
+          gitleaks detect --no-banner --redact --log-opts="origin/${{ github.base_ref }}..HEAD"
+
+  check:
+    name: Install, lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    needs: secrets-scan
+    steps:
+      - uses: actions/checkout@PIN-BY-HASH # actions/checkout, pin by hash, note the version here
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@PIN-BY-HASH # pnpm/action-setup, pin by hash, or remove if you use npm or yarn
+        with:
+          version: 10
+      - uses: actions/setup-node@PIN-BY-HASH # actions/setup-node, pin by hash, note the version here
+        with:
+          node-version: ${{ vars.NODE_VERSION || '20' }}
+          cache: pnpm
+      - name: Install (lockfile must match)
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Test
+        run: pnpm test
+        env:
+          NODE_ENV: test
+          # Fixed, public, fake values only. Example:
+          # APP_SECRET: ci-test-secret
+      - name: Build
+        run: pnpm build
+
+  audit:
+    name: Dependency audit (report only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@PIN-BY-HASH # actions/checkout, pin by hash, note the version here
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@PIN-BY-HASH # pnpm/action-setup, pin by hash
+        with:
+          version: 10
+      - uses: actions/setup-node@PIN-BY-HASH # actions/setup-node, pin by hash
+        with:
+          node-version: ${{ vars.NODE_VERSION || '20' }}
+      - name: Audit (does not fail the pull request)
+        # Report only: findings are read by the security role and raised as issues.
+        # Make this blocking only by a decision of the owner, recorded in writing.
+        continue-on-error: true
+        run: pnpm audit --audit-level=high
