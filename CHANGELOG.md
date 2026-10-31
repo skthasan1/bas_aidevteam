@@ -2,9 +2,13 @@
 
 Purpose: the release history of Build@Scale AI Dev Team. Newest first.
 
-## Unreleased
+## 0.2.0 - 2026-10-31
 
+Keeping the kit current, and policy that fits real teams.
+
+Changed:
 - Decisions can be shared by several people and split by area (`covers.decision` as a list, `decision_areas`). Every decider must be a human owner of the project.
+- A project can be `archived`, or planned (no repositories yet, not watched). Such a project is dormant: it needs no lead, merge policy or coverage until it becomes active.
 
 Added:
 - Version marker: `onboard --apply` writes `.bas-aidevteam-version` and `.bas-aidevteam-manifest.json` (a hash of every kit template file as written) into the hub.

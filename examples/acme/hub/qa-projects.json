@@ -51,6 +51,7 @@
         "security": "role:security-lead",
         "decision": "person:dana-owner"
       },
+      "decision_areas": {},
       "members": []
     },
     "tasks": {
@@ -74,7 +75,8 @@
         "test": "person:dana-owner",
         "security": "role:security-lead",
         "decision": "person:dana-owner"
-      }
+      },
+      "decision_areas": {}
     }
   },
   "mode": "team",
