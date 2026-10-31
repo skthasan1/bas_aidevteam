@@ -4,7 +4,7 @@
 
 ## 1. What this is
 
-**Build@Scale AI Dev Team** (`bas_aidevteam`) is an optional kit for people who start a project with Claude Code (or another coding agent) and want more than one agent: a small, accountable AI team that works locally on the owner's machine and through GitHub together with human developers and with other people's AI teams.
+**Build@Scale AI Dev Team** (`bas_aidevteam`) is an optional kit for people who start a project with a coding agent (Claude Code, Codex or any other that follows a written brief) and want more than one agent: a small, accountable AI team that works locally on the owner's machine and through GitHub together with human developers and with other people's AI teams.
 
 It is a sibling of **Build@Scale with AI** (`buildatscale`):
 
@@ -13,7 +13,7 @@ It is a sibling of **Build@Scale with AI** (`buildatscale`):
 | Level | one project | an organization (many repos, many people) |
 | What it ships | commands, templates, the UI pack, quality gates | roles, a hub, a protocol, watches, an onboarding script |
 | Runs where | inside the project's `.claude/` | a local hub folder plus GitHub |
-| Needed by the other? | no | uses Build@Scale's commands (`/pipeline`, `/audit`, `/mft`, `/security`); works without them but gets weaker |
+| Needed by the other? | no | yes: Build@Scale with AI is mandatory in every project the team works on (`doctor --repo` checks it) |
 
 ## 2. Principles
 

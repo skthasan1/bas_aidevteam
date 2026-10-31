@@ -79,9 +79,14 @@ test("people errors: unknown role, shared account, unknown account", () => {
 
 test("repo guardrails are found missing, then present", () => {
   const dir = tmpDir();
-  assert.equal(checkRepoGuardrails(dir).errors.length, 3);
+  assert.equal(checkRepoGuardrails(dir).errors.length, 5);
   fs.mkdirSync(path.join(dir, ".github/workflows"), { recursive: true });
   for (const f of [".github/pull_request_template.md", ".github/workflows/checks.yml", ".github/CODEOWNERS"]) fs.writeFileSync(path.join(dir, f), "x");
+  const noFramework = checkRepoGuardrails(dir).errors;
+  assert.equal(noFramework.length, 2);
+  assert.match(noFramework.join(" "), /Build@Scale with AI framework/);
+  fs.mkdirSync(path.join(dir, "shared"));
+  for (const f of ["shared/FRAMEWORK.md", "shared/VERSION"]) fs.writeFileSync(path.join(dir, f), "x");
   assert.equal(checkRepoGuardrails(dir).errors.length, 0);
 });
 

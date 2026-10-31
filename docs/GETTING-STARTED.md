@@ -1,14 +1,14 @@
 # Getting started
 
-Purpose: walk a new organization from nothing to a working AI team, step by step.
+Purpose: explain, in plain steps, what the guided setup does for you. Your coding agent does these steps when you paste the prompt in the README (it follows `SETUP.md`); read this if you want to know what it is doing, or to do a step yourself.
 
 ## 1. Prerequisites
 
-- Claude Code installed (or another coding agent that reads a brief and follows it).
+- A coding agent installed (Claude Code, Codex or another that reads a brief and follows it).
 - Git and Node.js installed. Check with `git --version` and `node --version`.
 - A GitHub organization or account that owns the repositories.
 - The GitHub command line tool (`gh`), signed in as you, for the owner's own steps.
-- Optional but recommended: Build@Scale with AI installed in each project.
+- Build@Scale with AI in each project. This is mandatory; the guided setup pulls it into each repository for you.
 - A folder for the hub, outside every repository. Example: `~/hub`.
 - Time: about two hours for the first set-up, and a few short sessions in the first week.
 
@@ -52,7 +52,7 @@ For every role:
 
 1. Make a folder for it: its own clone or worktree.
 2. Give it its own ports and its own database name (see `docs/ARCHITECTURE.md`).
-3. Open Claude Code in that folder.
+3. Open your coding agent in that folder.
 4. Paste the start-up message from the role's brief in `roles/`. The brief says what the role is for, what it may do, its daily loop and what it must never do.
 5. Ask it to restate its limits in its own words. If it gets one wrong, fix the brief, not the answer.
 6. Give it one small first task and watch it.

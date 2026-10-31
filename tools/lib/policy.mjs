@@ -106,8 +106,11 @@ export function checkRepoGuardrails(dir) {
     [".github/pull_request_template.md", "the pull request template"],
     [".github/workflows/checks.yml", "the baseline checks workflow"],
     [".github/CODEOWNERS", "CODEOWNERS"],
+    // Build@Scale with AI is mandatory in every project: git clone https://github.com/skthasan1/buildatscale shared
+    ["shared/FRAMEWORK.md", "the Build@Scale with AI framework (mandatory in every project)"],
+    ["shared/VERSION", "the Build@Scale with AI version file"],
   ];
   const errors = [];
-  for (const [rel, what] of must) if (!fs.existsSync(path.join(dir, rel))) errors.push(`${what} is missing (${rel}); copy it from templates/repo`);
+  for (const [rel, what] of must) if (!fs.existsSync(path.join(dir, rel))) errors.push(`${what} is missing (${rel}); add it (see SETUP.md, phase 5)`);
   return { errors, warnings: [] };
 }
