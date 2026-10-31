@@ -3,7 +3,7 @@
 //   node tools/app-token.mjs --app-id 123456 --key-file <path> --owner <org or user>             same, for the installation on that owner
 // Use it: GH_TOKEN=$(node tools/app-token.mjs ...) gh pr list -R owner/name
 // The private key is read from the file you name and is never printed, logged or sent anywhere except as a signature. Only the token is printed.
-// Tokens are cached (default ~/.kairo-app/cache, override with --cache-dir) until five minutes before they expire.
+// Tokens are cached (default ~/.bas-aidevteam/cache, override with --cache-dir) until five minutes before they expire.
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -41,7 +41,7 @@ async function api(fetchImpl, base, method, route, headers) {
 }
 
 // Returns an installation token for the owner of `repo` (owner/name) or for `owner`.
-export async function getToken({ appId, keyFile, repo, owner, base = "https://api.github.com", fetchImpl = fetch, cacheDir = path.join(os.homedir(), ".kairo-app", "cache"), now = Date.now() }) {
+export async function getToken({ appId, keyFile, repo, owner, base = "https://api.github.com", fetchImpl = fetch, cacheDir = path.join(os.homedir(), ".bas-aidevteam", "cache"), now = Date.now() }) {
   if (!appId || !/^\d+$/.test(String(appId))) throw new Error("--app-id must be the App's numeric ID");
   if (!keyFile) throw new Error("--key-file <path to the .pem> is required");
   if (!repo && !owner) throw new Error("give --repo owner/name or --owner <org or user>");
