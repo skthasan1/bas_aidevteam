@@ -46,7 +46,7 @@ Set up Build@Scale AI Dev Team for me. Clone https://github.com/skthasan1/bas_ai
 Your agent does the rest:
 
 1. **Pulls the kit** and checks your machine.
-2. **Asks you short forms,** each question with a recommended answer: new project or existing, solo or team, your projects and owners, which AI workers each person runs, and who covers review, test, security and decision.
+2. **Asks you short forms,** each question with a recommended answer: new project or existing, solo or team, your projects and owners, which AI workers each person runs, who covers review, test, security and decision, and how each AI gets its own GitHub identity.
 3. **Writes your config, shows a dry run,** and applies it only after your yes.
 4. **Runs `doctor`** and fixes what it reports with you.
 5. **Adopts Build@Scale with AI in every project** (it is pulled into each repository, and a new project is scaffolded).
@@ -75,6 +75,7 @@ Details and how to combine roles: [docs/ROLES.md](docs/ROLES.md).
 - [docs/SECURITY-MODEL.md](docs/SECURITY-MODEL.md) - identities, tokens, secrets, destructive actions, walls between projects
 - [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) - what the setup does, in plain steps
 - [docs/ROLES.md](docs/ROLES.md) - the roles and the four required functions
+- [docs/IDENTITIES.md](docs/IDENTITIES.md) - one GitHub identity per AI (GitHub Apps), permissions by role
 - [docs/PANEL.md](docs/PANEL.md) - the optional local control panel and background runs (experimental)
 - `roles/`, `dev/`, `qa/`, `research/` - the briefs and kits for each role
 - `templates/` and `tools/` - hub and repository templates, the watches, `onboard`, `doctor`

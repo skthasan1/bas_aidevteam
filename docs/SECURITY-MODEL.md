@@ -19,6 +19,8 @@ Rules:
 - Never run an AI session under a human's personal login for anything that changes GitHub. The only exception is a short, named one: the owner writes down which session, why, and the date it ends, and says so in the pull request body.
 - If you cannot yet give every AI its own identity, name the AI in the body of every issue or comment it writes, and set an end date for fixing it. `doctor` flags two workers that share one account.
 
+See `docs/IDENTITIES.md` for how to create a GitHub App per AI, the permissions by role, and how to verify it.
+
 ## 2. Token handling
 
 - The kit's own tools are read-only toward GitHub: the wrapper in `tools/lib/gh.mjs` refuses anything that writes unless the caller passes `write: true`, and no watch does.

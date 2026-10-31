@@ -10,9 +10,10 @@ Purpose: how to open each AI worker the way you chose to run it. Every worker ha
   2. If you use VS Code, copy `workers/dana-owner-tech-lead-1/vscode-settings.json` from the hub to `<folder for dana-owner-tech-lead-1>/.vscode/settings.json`, so this window has the color #1d4ed8 and the title "tech-lead - acme-techlead-bot". Add `.vscode/settings.json` to the folder's `.git/info/exclude` so it is never committed.
   3. Start your coding agent in that window and paste the start-up brief.
 
-## qa-lead - acme-qa-bot (for dana-owner)
+## qa-lead - acme-ai-qa-lead[bot] (for dana-owner)
 
-- Role: qa-lead. Account: acme-qa-bot. Brief: `examples/acme/hub/briefs/qa-lead-startup.md`.
+- Role: qa-lead. Account: acme-ai-qa-lead[bot]. Brief: `examples/acme/hub/briefs/qa-lead-startup.md`.
+- GitHub App 100001. Anything this worker does on GitHub runs as its App: `node tools/as-app.mjs --config examples/acme/hub/qa-projects.json --role qa-lead --person dana-owner --account acme-ai-qa-lead[bot] --owner acme -- <command>` (for example `gh pr list -R <owner/repo>`).
 - Run mode: terminal.
   1. `cd <folder for dana-owner-qa-lead-1>`
   2. Start your coding agent there and paste the start-up brief.

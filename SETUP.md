@@ -58,6 +58,20 @@ If the person skips a role, they must name who covers that function instead (the
 
 Also ask which AI is the **lead** of each project (the one that talks to other teams' AIs). Recommend the tech lead AI.
 
+## Phase 3b: form 4, the identity of each AI worker
+
+Every AI worker gets its own GitHub identity, so a comment shows which worker wrote it and no AI acts under a person's login. The reference is `docs/IDENTITIES.md`; read it first.
+
+For each AI worker, ask:
+
+1. **Identity type:** (a) a GitHub App (recommended: no extra seat, one-hour tokens), or (b) a machine user (a second GitHub account). Recommend (a) unless the person needs the AI's approval to count as a required review.
+2. **Where it works:** only the person's own account, only one organization, or both. If both, the App must be set to "Any account" when created. Say plainly that "Any account" only makes the App's install page public; access still depends on the private key and on who installs it.
+3. **Name:** suggest `<org>-ai-<role>` in lowercase.
+
+Then walk the person through creating each App, step by step (docs/IDENTITIES.md section 2), one worker at a time. You may print the exact name, description, permissions and repositories to select (the generated `ONBOARDING-TODO.md` has them per worker). The person does every click. Never ask for, read, print or handle the private key or any token: ask only for the **App ID** and the **path** of the `.pem` file, and write those into the config as `app`. Check that the key file is outside every repository.
+
+When an App exists and is installed, verify it: run `node tools/app-token.mjs` for each owner it is installed on (it prints a token, which you must not show or store), then ask the person to name a pull request and post one test comment with `node tools/as-app.mjs`. It must appear as `<name>[bot]`. If a worker has no identity yet, leave `app` and `account` empty: `doctor` will warn that it would act under a person's login, and the to-do lists the step.
+
 ## Phase 4: write the config, dry run, doctor
 
 1. Write the person's config (JSON) from their answers, following `examples/acme/qa-projects.json`. Put it in the hub folder, outside the kit folder. Show it to the person.

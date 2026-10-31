@@ -20,6 +20,10 @@ export const RUNNER_DEFAULT_MINUTES = 30;
 export const RUNNER_MAX_MINUTES = 240;
 const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const HANDLE_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
+// An AI account may be a GitHub App's bot login: <slug>[bot]. Only accounts, ai_accounts and a project's lead take this form; people never do.
+const ACCOUNT_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:\[bot\])?$/;
+export const IDENTITIES = ["app", "machine-user"];
+const APP_KEYS = ["id", "key_file", "owner"];
 
 const isObj = (x) => x && typeof x === "object" && !Array.isArray(x);
 
@@ -52,11 +56,24 @@ export function validateConfig(raw) {
     if (surface !== "" && !SURFACES.includes(surface)) errors.push(`${at}.surface must be one of ${SURFACES.join(", ")}`);
     const color = isObj(r) && r.color !== undefined ? r.color : "";
     if (color !== "" && !(typeof color === "string" && COLOR_RE.test(color))) errors.push(`${at}.color must be a #rrggbb color`);
-    return { headless: HEADLESS.includes(headless) ? headless : false, folder: typeof folder === "string" ? folder : "", surface: SURFACES.includes(surface) ? surface : "", color: typeof color === "string" && COLOR_RE.test(color) ? color : "" };
+    const identity = isObj(r) && r.identity !== undefined ? r.identity : "";
+    if (identity !== "" && !IDENTITIES.includes(identity)) errors.push(`${at}.identity must be one of ${IDENTITIES.join(", ")} (or empty)`);
+    return { headless: HEADLESS.includes(headless) ? headless : false, folder: typeof folder === "string" ? folder : "", surface: SURFACES.includes(surface) ? surface : "", color: typeof color === "string" && COLOR_RE.test(color) ? color : "", identity: IDENTITIES.includes(identity) ? identity : "", app: appOf(at, isObj(r) ? r.app : undefined) };
+  };
+  // The worker's GitHub App: { id, key_file, owner }. The config holds only the App ID and the PATH of the key file, never the key.
+  const appOf = (at, a) => {
+    if (a === undefined || a === null) return null;
+    if (!isObj(a)) { errors.push(`${at}.app must be an object {id, key_file, owner}`); return null; }
+    for (const k of Object.keys(a)) if (!APP_KEYS.includes(k)) errors.push(`${at}.app: unknown field "${k}" (allowed: ${APP_KEYS.join(", ")}); never put a key or token in the config, only the path of the key file`);
+    const id = typeof a.id === "number" && Number.isSafeInteger(a.id) && a.id > 0 ? String(a.id) : a.id;
+    if (typeof id !== "string" || !/^[0-9]+$/.test(id)) errors.push(`${at}.app.id must be the App's numeric ID`);
+    if (typeof a.key_file !== "string" || !a.key_file.trim()) errors.push(`${at}.app.key_file must be the path of the App's private key file (.pem)`);
+    if (a.owner !== undefined && (typeof a.owner !== "string" || (a.owner !== "" && !HANDLE_RE.test(a.owner)))) errors.push(`${at}.app.owner must be the organization or user the App is installed on`);
+    return { id: String(id), key_file: typeof a.key_file === "string" ? a.key_file : "", owner: typeof a.owner === "string" ? a.owner : "" };
   };
   const addRole = (name, account, src) => {
     if (!ROLE_NAMES.includes(name)) { errors.push(`roles: unknown role "${name}" (known: ${ROLE_NAMES.join(", ")})`); return; }
-    if (account !== undefined && account !== "" && (typeof account !== "string" || !HANDLE_RE.test(account))) errors.push(`roles.${name}: invalid account`);
+    if (account !== undefined && account !== "" && (typeof account !== "string" || !ACCOUNT_RE.test(account))) errors.push(`roles.${name}: invalid account`);
     roles.push({ name, account: account ?? "", ...workerExtras(`roles.${name}`, src) });
   };
   if (Array.isArray(roleInput)) roleInput.forEach((r) => (typeof r === "string" ? addRole(r) : addRole(r?.name, r?.account, r)));
@@ -80,7 +97,7 @@ export function validateConfig(raw) {
       const name = typeof r === "string" ? r : r?.name;
       const account = typeof r === "string" ? "" : (r?.account ?? "");
       if (!ROLE_NAMES.includes(name)) { errors.push(`people.${handle}: unknown role "${name}" (known: ${ROLE_NAMES.join(", ")})`); continue; }
-      if (account !== "" && (typeof account !== "string" || !HANDLE_RE.test(account))) { errors.push(`people.${handle}.${name}: invalid account`); continue; }
+      if (account !== "" && (typeof account !== "string" || !ACCOUNT_RE.test(account))) { errors.push(`people.${handle}.${name}: invalid account`); continue; }
       workers.push({ name, account, ...workerExtras(`people.${handle}.${name}`, r) });
     }
     people[handle] = { roles: workers };
@@ -108,7 +125,7 @@ export function validateConfig(raw) {
       if (p.watch === undefined) warnings.push(`${at}.watch not set, treated as off`);
       const merge = p.merge ?? "owner-only";
       if (!MERGE.includes(merge)) errors.push(`${at}.merge must be one of ${MERGE.join(", ")}`);
-      if (p.lead !== undefined && (typeof p.lead !== "string" || !HANDLE_RE.test(p.lead))) errors.push(`${at}.lead must be one handle (the project's lead AI account)`);
+      if (p.lead !== undefined && (typeof p.lead !== "string" || !ACCOUNT_RE.test(p.lead))) errors.push(`${at}.lead must be one handle (the project's lead AI account)`);
       const covers = p.covers ?? {};
       if (!isObj(covers)) errors.push(`${at}.covers must be an object {review, test, security, decision}`);
       else for (const [fn, v] of Object.entries(covers)) {
@@ -135,7 +152,9 @@ export function validateConfig(raw) {
     if (raw[k] !== undefined && (!Array.isArray(raw[k]) || !raw[k].every((s) => typeof s === "string"))) errors.push(`${k} must be an array of strings`);
   }
 
-  const regexOk = (s) => { try { new RegExp(s, "i"); return true; } catch { return false; } };
+  if (Array.isArray(raw.ai_accounts)) for (const a of raw.ai_accounts) if (typeof a === "string" && !ACCOUNT_RE.test(a)) errors.push(`ai_accounts: invalid account ${JSON.stringify(a)}`);
+
+  const regexOk =(s) => { try { new RegExp(s, "i"); return true; } catch { return false; } };
   if (raw.pr_watch !== undefined) {
     if (!isObj(raw.pr_watch)) errors.push("pr_watch must be an object {skip_authors, skip_titles}");
     else {

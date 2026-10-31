@@ -114,7 +114,40 @@ export function checkPolicy(config) {
   for (const w of allWorkers) if (w.headless === "write-branch" && w.name !== "ai-developer") errors.push(`${w.at}: headless "write-branch" is only for ai-developer; ${w.name} can run headless as "read-only" at most`);
   for (const w of allWorkers) if (w.surface === "background" && !w.headless) errors.push(`${w.at}: surface is "background" but headless is not set; set headless to "read-only" (or "write-branch" for ai-developer)`);
   if (!config.runner && allWorkers.some((w) => w.headless)) errors.push('some worker is headless but the config has no "runner" (command and arguments of the agent to run)');
+  checkIdentityShapes(config, errors, warnings);
   return { errors, warnings };
+}
+
+// The workers that actually run: each person's own when there is a "people" section, else the organization's roles.
+export function effectiveWorkers(config) {
+  const hasPeople = Object.keys(config.people).length > 0;
+  return hasPeople
+    ? Object.entries(config.people).flatMap(([h, x]) => x.roles.map((w) => ({ ...w, at: `people.${h}.${w.name}` })))
+    : config.roles.map((w) => ({ ...w, at: `roles.${w.name}` }));
+}
+
+// Identity checks that need no files: one identity per AI, the key file's extension, and a worker with no identity at all.
+// (Where a key file sits is checked in identities.mjs, because that needs the file system. A key's contents are never read.)
+function checkIdentityShapes(config, errors, warnings) {
+  const workers = effectiveWorkers(config);
+  const byApp = new Map();
+  const byAccount = new Map();
+  const hasPeople = Object.keys(config.people).length > 0;
+  for (const w of workers) {
+    if (w.app) {
+      if (byApp.has(w.app.id)) errors.push(`${w.at}: App ${w.app.id} is also used by ${byApp.get(w.app.id)}; one identity per AI worker (give each worker its own App)`);
+      else byApp.set(w.app.id, w.at);
+      if (path.extname(w.app.key_file).toLowerCase() !== ".pem") errors.push(`${w.at}.app.key_file must be a .pem file (the private key GitHub gives you when you generate one)`);
+    }
+    // With a "people" section the loop above already reports a shared account; without one it is checked here.
+    if (!hasPeople && w.account) {
+      if (byAccount.has(lower(w.account))) errors.push(`${w.at}: account "${w.account}" is also used by ${byAccount.get(lower(w.account))}; one identity per AI worker`);
+      else byAccount.set(lower(w.account), w.at);
+    }
+    if (w.identity === "app" && !w.app) errors.push(`${w.at}: identity is "app" but no "app" {id, key_file} is set`);
+    if (w.identity === "machine-user" && !w.account) errors.push(`${w.at}: identity is "machine-user" but no "account" is set`);
+    if (config.mode === "team" && !w.app && !w.account) warnings.push(`${w.at}: no identity (no "app" and no "account"); it would act under a person's login, which breaks one identity per AI`);
+  }
 }
 
 // Checks that a repository folder carries the guardrail files that stand in for a watching person.

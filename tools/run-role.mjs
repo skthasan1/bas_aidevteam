@@ -30,8 +30,8 @@ const utcDate = (d) => d.toISOString().slice(0, 10);
 // people's; without one they are the organization's roles (person "").
 export function listWorkers(config) {
   const people = Object.entries(config.people ?? {});
-  if (people.length) return people.flatMap(([person, x]) => x.roles.map((w) => ({ person, role: w.name, account: w.account || "", headless: w.headless || false, folder: w.folder || "" })));
-  return config.roles.map((w) => ({ person: "", role: w.name, account: w.account || "", headless: w.headless || false, folder: w.folder || "" }));
+  if (people.length) return people.flatMap(([person, x]) => x.roles.map((w) => ({ person, role: w.name, account: w.account || "", headless: w.headless || false, folder: w.folder || "", app: w.app || null })));
+  return config.roles.map((w) => ({ person: "", role: w.name, account: w.account || "", headless: w.headless || false, folder: w.folder || "", app: w.app || null }));
 }
 
 // Finds exactly one worker. Asks for more detail instead of guessing when several match.

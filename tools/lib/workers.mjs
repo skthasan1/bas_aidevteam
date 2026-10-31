@@ -67,6 +67,10 @@ export function startInstructions(config, hubPath = "<hub-path>") {
     const folder = w.folder || `<folder for ${w.slug}>`;
     L.push(`## ${w.label}${w.person ? ` (for ${w.person})` : ""}`, "");
     L.push(`- Role: ${w.name}. Account: ${w.account || "(not set yet)"}. Brief: \`${hubPath}/briefs/${w.name}-startup.md\`.`);
+    if (w.app) {
+      const sel = `--role ${w.name}${w.person ? ` --person ${w.person}` : ""}${w.account ? ` --account ${w.account}` : ""}`;
+      L.push(`- GitHub App ${w.app.id}. Anything this worker does on GitHub runs as its App: \`node tools/as-app.mjs --config ${hubPath}/qa-projects.json ${sel} --owner ${w.app.owner || config.organization || "<org>"} -- <command>\` (for example \`gh pr list -R <owner/repo>\`).`);
+    }
     const surface = w.surface || "terminal";
     if (!w.surface) L.push("- Run mode: not chosen yet; the steps below are for a terminal. Set `surface` to `editor`, `terminal` or `background` in the config to change them.");
     if (surface === "editor") {

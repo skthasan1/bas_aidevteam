@@ -19,7 +19,13 @@
     },
     {
       "name": "qa-lead",
-      "account": "acme-qa-bot"
+      "account": "acme-ai-qa-lead[bot]",
+      "identity": "app",
+      "app": {
+        "id": "100001",
+        "key_file": "~/.acme-keys/acme-ai-qa-lead.pem",
+        "owner": "acme"
+      }
     },
     {
       "name": "security-lead",
@@ -91,8 +97,14 @@
         },
         {
           "name": "qa-lead",
-          "account": "acme-qa-bot",
-          "surface": "terminal"
+          "account": "acme-ai-qa-lead[bot]",
+          "surface": "terminal",
+          "identity": "app",
+          "app": {
+            "id": "100001",
+            "key_file": "~/.acme-keys/acme-ai-qa-lead.pem",
+            "owner": "acme"
+          }
         },
         {
           "name": "researcher",
@@ -153,7 +165,7 @@
   "ai_accounts": [
     "acme-techlead-bot",
     "acme-dev-bot",
-    "acme-qa-bot",
+    "acme-ai-qa-lead[bot]",
     "acme-research-bot",
     "sam-dev-bot-1",
     "sam-dev-bot-2",

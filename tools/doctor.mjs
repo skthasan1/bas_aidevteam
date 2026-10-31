@@ -1,16 +1,17 @@
 // Checks that the setup works without a person watching: the policy in the config, and optionally one repository's guardrail files.
-//   node tools/doctor.mjs --config qa-projects.json [--repo <folder>] [--me <handle>] [--hub <folder>]
+//   node tools/doctor.mjs --config qa-projects.json [--repo <folder>] [--me <handle>] [--hub <folder>] [--check-keys]
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { checkHub, readKitVersion } from "./lib/marker.mjs";
 import { loadConfig } from "./lib/config.mjs";
 import { checkPolicy, checkRepoGuardrails, mineView, workersOf } from "./lib/policy.mjs";
 import { parseArgs } from "./lib/cli.mjs";
+import { checkKeyFiles } from "./lib/identities.mjs";
 
 const KIT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-export function doctor({ config, repo, me, hub, kitRoot = KIT_ROOT, log = console.log }) {
-  const results = [checkPolicy(config)];
+export function doctor({ config, repo, me, hub, configDir, checkKeys = false, kitRoot = KIT_ROOT, log = console.log }) {
+  const results = [checkPolicy(config), checkKeyFiles(config, { configDir, hub, checkKeys })];
   if (repo) results.push(checkRepoGuardrails(repo));
   // A hub with no marker, or one from an older kit, is a warning (not a problem): the setup still works.
   if (hub) results.push(checkHub(hub, readKitVersion(kitRoot)));
@@ -30,18 +31,20 @@ export function doctor({ config, repo, me, hub, kitRoot = KIT_ROOT, log = consol
 
 function main() {
   let flags;
-  try { ({ flags } = parseArgs(process.argv.slice(2), ["help"])); } catch (e) { console.error(e.message); process.exitCode = 2; return; }
+  try { ({ flags } = parseArgs(process.argv.slice(2), ["help", "check-keys"])); } catch (e) { console.error(e.message); process.exitCode = 2; return; }
   if (flags.help) {
     console.log(["Usage: node tools/doctor.mjs --config <file> [--repo <folder>] [--me <handle>] [--hub <folder>]",
       "  --config  your organization config (default: qa-projects.json)",
       "  --repo    also check that a repository folder has the template, the checks workflow and CODEOWNERS",
       "  --hub     also check the hub folder's version marker (warns when it is missing or older than this kit)",
+      "  --check-keys  also check that each App key file exists and is not readable by other users (existence only on Windows); never reads a key",
       "  --me      also list the projects this person owns or belongs to, with their role and merge power"].join(String.fromCharCode(10)));
     return;
   }
   try {
-    const config = loadConfig(typeof flags.config === "string" ? flags.config : "qa-projects.json");
-    const res = doctor({ config, repo: typeof flags.repo === "string" ? flags.repo : undefined, me: typeof flags.me === "string" ? flags.me : undefined, hub: typeof flags.hub === "string" ? flags.hub : undefined });
+    const configFile = typeof flags.config === "string" ? flags.config : "qa-projects.json";
+    const config = loadConfig(configFile);
+    const res = doctor({ config, configDir: path.dirname(path.resolve(configFile)), checkKeys: !!flags["check-keys"],repo: typeof flags.repo === "string" ? flags.repo : undefined, me: typeof flags.me === "string" ? flags.me : undefined, hub: typeof flags.hub === "string" ? flags.hub : undefined });
     if (res.errors.length) process.exitCode = 1;
   } catch (e) { console.error(e.message); process.exitCode = 2; }
 }

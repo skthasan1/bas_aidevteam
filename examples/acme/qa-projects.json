@@ -16,7 +16,13 @@
       "headless": "write-branch"
     },
     "qa-lead": {
-      "account": "acme-qa-bot"
+      "account": "acme-ai-qa-lead[bot]",
+      "identity": "app",
+      "app": {
+        "id": "100001",
+        "key_file": "~/.acme-keys/acme-ai-qa-lead.pem",
+        "owner": "acme"
+      }
     },
     "security-lead": {
       "account": "acme-security-bot"
@@ -37,7 +43,7 @@
   "ai_accounts": [
     "acme-techlead-bot",
     "acme-dev-bot",
-    "acme-qa-bot",
+    "acme-ai-qa-lead[bot]",
     "acme-research-bot",
     "sam-dev-bot-1",
     "sam-dev-bot-2",
@@ -103,7 +109,13 @@
         {
           "name": "qa-lead",
           "surface": "terminal",
-          "account": "acme-qa-bot"
+          "account": "acme-ai-qa-lead[bot]",
+          "identity": "app",
+          "app": {
+            "id": "100001",
+            "key_file": "~/.acme-keys/acme-ai-qa-lead.pem",
+            "owner": "acme"
+          }
         },
         {
           "name": "researcher",

@@ -20,6 +20,7 @@ import { parseArgs } from "./lib/cli.mjs";
 import { loadConfig, reposOf } from "./lib/config.mjs";
 import { MARKER_FILE, MANIFEST_FILE, buildManifest, manifestText, readKitVersion } from "./lib/marker.mjs";
 import { listWorkers, startInstructions, vscodeSettings } from "./lib/workers.mjs";
+import { appRequestFor, projectsOfWorker } from "./lib/identities.mjs";
 
 const KIT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TEXT_EXT = new Set([".md", ".txt", ".json", ".csv", ".yml", ".yaml", ".html", ".mjs", ".js"]);
@@ -65,6 +66,32 @@ function varsFor(config, role) {
   };
 }
 
+// "AI identities": one block per worker with what to enter when creating its GitHub App. No secrets and no key contents.
+function identitiesSection(config) {
+  const L = ["## 3. AI identities", "", "Each AI worker acts as its own GitHub App. Do the steps below once per worker, signed in as an owner of the organization. Never paste a private key into a chat or a file in this folder.", ""];
+  const workers = listWorkers(config);
+  const same = {};
+  for (const w of workers) same[w.name] = (same[w.name] ?? 0) + 1;
+  for (const w of workers) {
+    const projects = projectsOfWorker(config, w).map(([, p]) => p);
+    const req = appRequestFor({ ...w, sameRole: same[w.name] }, projects, config.organization);
+    const perm = (p) => `${p.name}: ${p.level}`;
+    L.push(`### ${w.label}${w.person ? ` (for ${w.person})` : ""}`, "");
+    L.push(`- [ ] Create a GitHub App named \`${req.appName}\`.`);
+    L.push(`- Description: ${req.description}`);
+    L.push(`- Permissions (repository): ${req.permissions.map(perm).join("; ")}.`);
+    for (const o of req.optional) L.push(`- Optional: ${perm(o)}, ${o.when}.`);
+    for (const n of req.notes) L.push(`- Note: ${n}`);
+    L.push(`- Never grant: ${req.never.join(", ")}. Leave webhooks off.`);
+    L.push(`- Where can this be installed: ${req.installOn}.`);
+    L.push(`- [ ] Install it on the organization and select only these repositories: ${req.repos.length ? req.repos.join(", ") : "(none yet; add the project repositories)"}.`);
+    L.push("- [ ] Generate a private key. Store the .pem file outside every repository and outside this folder, with access for you only. Tell the agent only the App ID and the key path; never the key.");
+    L.push(`- [ ] Add \`app\` {id, key_file${w.app?.owner ? "" : ", owner"}} to this worker in the config, and set its account to the App's login (\`<slug>[bot]\`).`);
+    L.push(`- [ ] Verify: \`node tools/app-token.mjs --app-id <App ID> --key-file <path to the .pem> --owner ${w.app?.owner || config.organization || "<org>"}\` prints a token (do not paste it anywhere), then post one test comment on a test issue with \`node tools/as-app.mjs\` and check that it shows as \`${req.appName}[bot]\`. Then run \`node tools/doctor.mjs --config <config> --check-keys\`.`, "");
+  }
+  return L;
+}
+
 export function todoText(config) {
   const org = config.organization || "<org>";
   const repos = [...new Set(Object.values(config.projects).flatMap(reposOf))];
@@ -76,15 +103,16 @@ export function todoText(config) {
   L.push("## 2. Tokens and keys", "");
   L.push("- [ ] For each role account, create a fine-grained token limited to the listed repositories. Store it where the role's session reads it (for example the gh CLI login of that machine user). Do not paste a token into any file in this folder or into a chat.");
   L.push("- [ ] Decide who pays for any model or cloud keys, and give each session only its own. Spending needs a named person's yes in the session that will spend.", "");
-  L.push("## 3. Repository settings (per repository)", "");
+  L.push(...identitiesSection(config));
+  L.push("## 4. Repository settings (per repository)", "");
   for (const repo of repos) {
     L.push(`- [ ] ${repo}: protect the default and production branches (pull request required, at least one approval, no force-push, no deletion).`);
     L.push(`- [ ] ${repo}: add the pull request template, issue templates, CODEOWNERS and the baseline CI workflow from templates/repo, then make the checks required once they are green.`);
     L.push(`- [ ] ${repo}: create the labels (priority, area, severity) from templates/repo.`);
   }
-  L.push("", "## 4. Projects", "");
+  L.push("", "## 5. Projects", "");
   for (const [id, p] of Object.entries(config.projects)) L.push(`- [ ] ${p.name} (${id}): confirm owners (${p.owners.join(", ")}), testing status (${p.testing}) and watch mode (${p.watch}).`);
-  L.push("", "## 5. First run", "");
+  L.push("", "## 6. First run", "");
   L.push("- [ ] Install Node 20 or newer and the gh CLI on the machine that runs the watches; sign in as the tech lead's account.");
   L.push("- [ ] Run each watch once with --dry-run, then without it, and read the output together.");
   L.push("- [ ] Open one session per enabled role and paste its start-up brief from briefs/.", "");
@@ -109,7 +137,7 @@ export function plan({ config, kitRoot = KIT_ROOT, hubPath = "" }) {
   }
   const { ai_accounts, bots, ai_comment_prefixes, ...rest } = config;
   // Write a worker without the empty headless/folder defaults the loader adds.
-  const slim = (w) => ({ name: w.name, account: w.account, ...(w.headless ? { headless: w.headless } : {}), ...(w.folder ? { folder: w.folder } : {}), ...(w.surface ? { surface: w.surface } : {}), ...(w.color ? { color: w.color } : {}) });
+  const slim = (w) => ({ name: w.name, account: w.account, ...(w.headless ? { headless: w.headless } : {}), ...(w.folder ? { folder: w.folder } : {}), ...(w.surface ? { surface: w.surface } : {}), ...(w.color ? { color: w.color } : {}), ...(w.identity ? { identity: w.identity } : {}), ...(w.app ? { app: { id: w.app.id, key_file: w.app.key_file, ...(w.app.owner ? { owner: w.app.owner } : {}) } } : {}) });
   const people = Object.fromEntries(Object.entries(config.people).map(([h, x]) => [h, { ...x, roles: x.roles.map(slim) }]));
   files.push({ rel: "qa-projects.json", content: JSON.stringify({ ...rest, projects: Object.fromEntries(Object.entries(rest.projects).map(([id, { dormant, ...p }]) => [id, p])), people, roles: config.roles.map(slim), bots, ai_comment_prefixes, ai_accounts }, null, 2) + "\n", source: "config" });
   for (const role of config.roles) {
