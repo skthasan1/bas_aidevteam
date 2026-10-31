@@ -78,3 +78,27 @@ Verify a new identity before relying on it:
 - If a key may have leaked: delete the key in the App's settings first (that revokes every token made from it), then generate a new one.
 - Branch rules still apply to Apps. An App can only bypass a rule if you add it as a bypass actor, and that is a person's decision per repository.
 - Merging without a human review: an App's approval may not satisfy a required review. Decide per repository whether a person approves and the AI merges, or whether to add the App as a bypass actor.
+
+## 6. Controls by role on repositories
+
+An App's permissions say what the AI can do. Install scope and repository rules say where and how far. Set all three. The first column group is enforced by GitHub; the last is the rule the AI follows and `doctor` or a person checks.
+
+| Role | Install on | May do | May not do | Merge |
+|---|---|---|---|---|
+| Tech lead | Every repository it reviews | Read code; review, comment, request changes; raise, label and assign issues; run the watches | Push code; edit CI files; change settings; spend; grant access | Only where the project's `merge` policy allows it, only into the integration branch (`develop`), never into `main` or a production branch, never its own work, never a change in a sensitive area (login, payments, database schema, deploy, production config) |
+| AI developer | Only the repositories it is assigned | Create branches from fresh `develop` named for its issue; open pull requests into `develop`; comment on its own issues | Push to `develop` or `main`; merge, including its own pull request; change login, payments, schema or deploy files without the owner and code owners; edit CI files unless Workflows write was granted, and then only by pull request a person reads | Never |
+| QA lead | Repositories it tests, read and comment | Read code; comment "verified" or "still fails" on issues; post the test report | Edit, commit, push or branch; raise, close, relabel or reprioritise issues (the tech lead raises them); use production keys or data | Never |
+| Security lead | The security repository, plus repositories where it raises findings | Read code; write audit results to the security repository by pull request; raise findings as issues with a severity label (not for confidential projects: those stay in the hub) | Edit product code; publish an exploit path in a public issue; mark a control as met, accept a risk or grant an exception without a person | Never |
+| Researcher | The research repository only | Open pull requests with reports, registry entries and evidence specs; draft issues for the tech lead to raise | Comment or raise issues in product repositories; run tests in a live project; spend past the owner's stop line; commit pictures, clips or audio | Never |
+
+## 7. Repository controls to set (a person does these once per repository)
+
+These are what make the table above true even if an AI makes a mistake.
+
+1. **Protect `develop` and `main`** with a branch ruleset: pull request required, at least one approval, no force push, no deletion. Add required status checks where CI exists.
+2. **No bypass for AIs by default.** Only add an App as a bypass actor on a repository where the owner has decided that AI may merge past a required review, and write that decision in the project's policy (`merge`).
+3. **CODEOWNERS** on sensitive paths (login, payments, schema, deploy, production config, CI files), so a person's review is required there whatever any AI does.
+4. **Restrict who can change CI files.** Treat any pull request that edits `.github/workflows/` as review tier T2: a named person reads the exact head.
+5. **Keep Administration off every App.** Changing repository settings, visibility, branch rules and collaborators stays with people.
+6. **Select repositories at install.** Do not install an AI on repositories it has no reason to touch. A broad install is a choice the owner makes knowingly, with the rulesets above doing the real protection.
+7. **Review the installs every quarter.** For each App: list repositories, permissions and last use; remove what is not used.

@@ -2,6 +2,10 @@
 
 Purpose: the release history of Build@Scale AI Dev Team. Newest first.
 
+## Unreleased
+
+- `docs/IDENTITIES.md`: controls by role on repositories (install scope, what each role may and may not do, who may merge) and the repository rules a person sets once per repository (protected branches, CODEOWNERS on sensitive paths, no Administration for any App, quarterly install review). `SETUP.md` shows these to the person.
+
 ## 0.3.0 - 2026-10-31
 
 Every AI gets its own GitHub identity.

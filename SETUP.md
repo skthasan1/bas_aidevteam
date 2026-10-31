@@ -70,6 +70,8 @@ For each AI worker, ask:
 
 Then walk the person through creating each App, step by step (docs/IDENTITIES.md section 2), one worker at a time. You may print the exact name, description, permissions and repositories to select (the generated `ONBOARDING-TODO.md` has them per worker). The person does every click. Never ask for, read, print or handle the private key or any token: ask only for the **App ID** and the **path** of the `.pem` file, and write those into the config as `app`. Check that the key file is outside every repository.
 
+Also show the person the controls for each role (`docs/IDENTITIES.md` sections 6 and 7): where the AI may be installed, what it may and may not do, and the repository rules a person sets once per repository (protected `develop` and `main`, CODEOWNERS on sensitive paths, no Administration for any App). Ask them to confirm each rule is in place; you cannot check them, and you must not change repository settings yourself.
+
 When an App exists and is installed, verify it: run `node tools/app-token.mjs` for each owner it is installed on (it prints a token, which you must not show or store), then ask the person to name a pull request and post one test comment with `node tools/as-app.mjs`. It must appear as `<name>[bot]`. If a worker has no identity yet, leave `app` and `account` empty: `doctor` will warn that it would act under a person's login, and the to-do lists the step.
 
 ## Phase 4: write the config, dry run, doctor
