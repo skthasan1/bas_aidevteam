@@ -2,6 +2,15 @@
 
 Purpose: the release history of Build@Scale AI Dev Team. Newest first.
 
+## Unreleased
+
+Added:
+- Version marker: `onboard --apply` writes `.bas-aidevteam-version` and `.bas-aidevteam-manifest.json` (a hash of every kit template file as written) into the hub.
+- `tools/upgrade.mjs --hub <folder> [--apply] [--force]`: shows what changed in the kit and updates only the template files you never edited; an edited file is kept and the kit's new text is written next to it as `<name>.kit-new`. Dry run by default.
+- `doctor --hub <folder>` warns when a hub has no marker or an older version than the kit.
+- `docs/MAINTAINING.md`: how the kit stays current (promotion pass from a live team, release gate, version rules, upgrading a team).
+- `templates/hub/learning/promotion-candidates.md`: the log a team keeps of lessons that may belong in the kit.
+
 ## 0.1.0 - first draft release
 
 First version of the kit. It is a draft: expect the protocol and the tools to change before 1.0.

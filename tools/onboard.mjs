@@ -9,6 +9,8 @@
 // and the angle-bracket ones the kit text uses: <org>, <owner> (the owner's name), <hub-path> (the --target path as given), <repo-list>,
 // and <role> (start-up briefs only: in the hub layouts <role> is for whoever fills the layout in). Anything the tool cannot know
 // (<date>, <reason>, <topic>, <amount>, <worktree-path> ...) is left as it is for a person or session to fill.
+// It also writes .bas-aidevteam-version (the kit VERSION) and .bas-aidevteam-manifest.json (sha256 of every template file as written),
+// which tools/upgrade.mjs uses to tell a file you edited from one you did not.
 // Safety: it refuses a path that resolves (through a symlink) outside the target, JSON-escapes values put into .json files,
 // and with --force keeps qa-projects.json.bak when it overwrites an existing qa-projects.json. Yes/no flags accept only true or false.
 import fs from "node:fs";
@@ -16,6 +18,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "./lib/cli.mjs";
 import { loadConfig, reposOf } from "./lib/config.mjs";
+import { MARKER_FILE, MANIFEST_FILE, buildManifest, manifestText, readKitVersion } from "./lib/marker.mjs";
 import { listWorkers, startInstructions, vscodeSettings } from "./lib/workers.mjs";
 
 const KIT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -108,12 +111,17 @@ export function plan({ config, kitRoot = KIT_ROOT, hubPath = "" }) {
   // Write a worker without the empty headless/folder defaults the loader adds.
   const slim = (w) => ({ name: w.name, account: w.account, ...(w.headless ? { headless: w.headless } : {}), ...(w.folder ? { folder: w.folder } : {}), ...(w.surface ? { surface: w.surface } : {}), ...(w.color ? { color: w.color } : {}) });
   const people = Object.fromEntries(Object.entries(config.people).map(([h, x]) => [h, { ...x, roles: x.roles.map(slim) }]));
-  files.push({ rel: "qa-projects.json", content: JSON.stringify({ ...rest, people, roles: config.roles.map(slim), bots, ai_comment_prefixes, ai_accounts }, null, 2) + "\n", source: "config" });
+  files.push({ rel: "qa-projects.json", content: JSON.stringify({ ...rest, projects: Object.fromEntries(Object.entries(rest.projects).map(([id, { dormant, ...p }]) => [id, p])), people, roles: config.roles.map(slim), bots, ai_comment_prefixes, ai_accounts }, null, 2) + "\n", source: "config" });
   for (const role of config.roles) {
     const src = path.join(kitRoot, "roles", `${role.name}.md`);
     if (!fs.existsSync(src)) { warnings.push(`roles/${role.name}.md not found: no start-up brief for ${role.name}`); continue; }
     files.push({ rel: `briefs/${role.name}-startup.md`, content: fill(fs.readFileSync(src, "utf8"), varsFor(config, role), { angle: angleFor(config, role, hubPath) }), source: `roles/${role.name}.md` });
   }
+  // The version marker: the kit version, and a hash of every kit template file as written (tools/upgrade.mjs reads both).
+  const kitVersion = readKitVersion(kitRoot);
+  if (!kitVersion) warnings.push("VERSION not found in the kit: the marker will say 0.0.0");
+  files.push({ rel: MARKER_FILE, content: `${kitVersion || "0.0.0"}\n`, source: "generated" });
+  files.push({ rel: MANIFEST_FILE, content: manifestText(buildManifest(files)), source: "generated" });
   files.push({ rel: "ONBOARDING-TODO.md", content: todoText(config), source: "generated" });
   files.push({ rel: "START-WORKERS.md", content: startInstructions(config, hubPath || "<hub-path>"), source: "generated" });
   // One VS Code settings file per worker that runs in an editor window; the person copies it into the worker's own folder.
@@ -123,11 +131,11 @@ export function plan({ config, kitRoot = KIT_ROOT, hubPath = "" }) {
   return { files, warnings };
 }
 
-const isLink = (p) => { try { return fs.lstatSync(p).isSymbolicLink(); } catch { return false; } };
+export const isLink = (p) => { try { return fs.lstatSync(p).isSymbolicLink(); } catch { return false; } };
 
 // realpath of a path that may not exist yet: resolve the nearest existing ancestor, then re-append the missing part.
 // A dangling symlink counts as existing, so the write cannot follow it.
-function realWithTail(p) {
+export function realWithTail(p) {
   let cur = p;
   const tail = [];
   for (;;) {
