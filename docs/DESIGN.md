@@ -151,5 +151,6 @@ Build@Scale has no shortcuts, so every project must cover four functions, and `d
 
 - A function is covered by an AI role somebody runs, or by a named person who owns or belongs to the project. A check (CI, a template) supports a function but never covers it alone.
 - A person who skips a role is fine, as long as the project's `covers` names who covers that function instead (a teammate's AI, or the person themselves).
+- A function may be covered by a list, for example `"decision": ["person:dana", "person:sam"]`: any one of them can decide. Decisions can also be split by area with `decision_areas`, for example `{ "merge": ["person:sam"], "spend": ["person:dana"] }`. Every decider is a human and an owner of the project.
 - The researcher is optional; nothing depends on it.
 - `doctor` fails when: a function is missing; a role does not do that function; nobody runs the named role; a named person is not in the project; the decision names an AI or a non-owner.

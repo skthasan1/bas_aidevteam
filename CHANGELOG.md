@@ -4,6 +4,8 @@ Purpose: the release history of Build@Scale AI Dev Team. Newest first.
 
 ## Unreleased
 
+- Decisions can be shared by several people and split by area (`covers.decision` as a list, `decision_areas`). Every decider must be a human owner of the project.
+
 Added:
 - Version marker: `onboard --apply` writes `.bas-aidevteam-version` and `.bas-aidevteam-manifest.json` (a hash of every kit template file as written) into the hub.
 - `tools/upgrade.mjs --hub <folder> [--apply] [--force]`: shows what changed in the kit and updates only the template files you never edited; an edited file is kept and the kit's new text is written next to it as `<name>.kit-new`. Dry run by default.

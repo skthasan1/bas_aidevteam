@@ -155,3 +155,23 @@ test("role:X must be run by somebody in this project when people are listed", ()
   // ... but a member without an entry gets nothing
   assert.match(joined(withPeople((r) => { r.projects.tasks.members = ["no-entry-member"]; r.projects.tasks.owners = ["dana-owner"]; return r; })), /tasks\.covers\.test: nobody in this project runs qa-lead/);
 });
+
+test("a function may be covered by a list; decisions may be shared and split by area, all by human owners", () => {
+  const c = build((r) => {
+    r.projects.notes.owners = ["dana-owner", "sam-dev"];
+    r.projects.notes.covers.decision = ["person:dana-owner", "person:sam-dev"];
+    r.projects.notes.decision_areas = { merge: ["person:sam-dev"], spend: ["person:dana-owner"] };
+    return r;
+  });
+  assert.deepEqual(checkPolicy(c).errors, []);
+  assert.deepEqual(c.projects.notes.decision_areas.merge, ["person:sam-dev"]);
+});
+
+test("every decider in a list or an area must be an owner and a human; an empty list is missing", () => {
+  const bad = (patch) => checkPolicy(build((r) => { patch(r.projects.notes); return r; })).errors.join(" ");
+  assert.match(bad((n) => { n.covers.decision = ["person:dana-owner", "person:sam-dev"]; }), /must be an owner of the project \(person:sam-dev\)/);
+  assert.match(bad((n) => { n.covers.decision = ["person:dana-owner", "role:tech-lead"]; }), /decision must be a person/);
+  assert.match(bad((n) => { n.decision_areas = { merge: ["person:stranger"] }; }), /decision_areas\.merge: "stranger" must be an owner/);
+  assert.throws(() => bad((n) => { n.covers.decision = []; }), /must be "role:<role>" or "person:<handle>", or a list/);
+  assert.throws(() => build((r) => { r.projects.notes.decision_areas = { Merge: ["person:dana-owner"] }; return r; }), /decision_areas\.Merge/);
+});

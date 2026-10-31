@@ -113,12 +113,21 @@ export function validateConfig(raw) {
       if (!isObj(covers)) errors.push(`${at}.covers must be an object {review, test, security, decision}`);
       else for (const [fn, v] of Object.entries(covers)) {
         if (!FUNCTIONS.includes(fn)) errors.push(`${at}.covers: unknown function "${fn}" (known: ${FUNCTIONS.join(", ")})`);
-        else if (typeof v !== "string" || !/^(role:[a-z-]+|person:[A-Za-z0-9-]+)$/.test(v)) errors.push(`${at}.covers.${fn} must be "role:<role>" or "person:<handle>"`);
+        else {
+          const list = Array.isArray(v) ? v : [v];
+          if (list.length === 0 || !list.every((x) => typeof x === "string" && /^(role:[a-z-]+|person:[A-Za-z0-9-]+)$/.test(x))) errors.push(`${at}.covers.${fn} must be "role:<role>" or "person:<handle>", or a list of them`);
+        }
+      }
+      const areas = p.decision_areas ?? {};
+      if (!isObj(areas)) errors.push(`${at}.decision_areas must be an object: area -> list of "person:<handle>"`);
+      else for (const [area, v] of Object.entries(areas)) {
+        const list = Array.isArray(v) ? v : [v];
+        if (!/^[a-z][a-z-]*$/.test(area) || list.length === 0 || !list.every((x) => typeof x === "string" && /^person:[A-Za-z0-9-]+$/.test(x))) errors.push(`${at}.decision_areas.${area} must be a lowercase area name with one or more "person:<handle>"`);
       }
       const members = p.members ?? [];
       if (!Array.isArray(members)) errors.push(`${at}.members must be an array of handles`);
       else for (const h of members) if (typeof h !== "string" || !HANDLE_RE.test(h)) errors.push(`${at}.members: invalid handle ${JSON.stringify(h)}`);
-      projects[id] = { ...p, dormant: planned || (p.testing ?? "later") === "archived", default: p.default ?? Object.values(p.repos ?? {})[0], testing, watch, merge, covers: isObj(covers) ? covers : {}, lead: p.lead ?? "", members: Array.isArray(members) ? members : [] };
+      projects[id] = { ...p, dormant: planned || (p.testing ?? "later") === "archived", default: p.default ?? Object.values(p.repos ?? {})[0], testing, watch, merge, covers: isObj(covers) ? covers : {}, decision_areas: isObj(areas) ? areas : {}, lead: p.lead ?? "", members: Array.isArray(members) ? members : [] };
     }
   }
 

@@ -52,7 +52,7 @@ Then ask the **coverage questions**, once per project. These four functions are 
 1. **Review:** who reads each change besides its author?
 2. **Test:** who runs the exact version and writes down what was not covered?
 3. **Security:** who checks secrets, access and data boundaries?
-4. **Decision:** who decides spend, releases, access and anything that cannot be undone? This is always a person who owns the project.
+4. **Decision:** who decides spend, releases, access and anything that cannot be undone? This is always a person who owns the project, and it can be more than one person. If different people decide different things (for example one decides merges and another decides spend), record that as `decision_areas`.
 
 If the person skips a role, they must name who covers that function instead (themselves, a teammate, or a teammate's AI). Do not accept "nobody" or "later" for any of the four. If they say "I will do it", write `person:<their handle>`.
 

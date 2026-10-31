@@ -75,18 +75,28 @@ export function checkPolicy(config) {
       else if (p.owners.some((o) => lower(o) === lower(h))) config.roles.forEach((r) => projectRoles.add(r.name));
     }
     for (const fn of FUNCTIONS) {
-      const v = p.covers[fn];
-      if (!v) { errors.push(`${at}.${fn} is missing: every project must say who covers ${fn} (role:<role> or person:<handle>)`); continue; }
+      const vs = [].concat(p.covers[fn] ?? []);
+      if (vs.length === 0) { errors.push(`${at}.${fn} is missing: every project must say who covers ${fn} (role:<role> or person:<handle>, or a list)`); continue; }
+      for (const v of vs) {
       const [kind, who] = v.split(":");
       if (kind === "role" && !ROLE_FOR[fn].includes(who)) errors.push(`${at}.${fn}: role "${who}" does not do ${fn} (use one of ${ROLE_FOR[fn].join(", ")}, or a person)`);
       else if (kind === "role" && !runRoles.has(who)) errors.push(`${at}.${fn}: nobody runs the role "${who}"; add it to roles or people, or name a person`);
       else if (kind === "role" && hasPeople && !projectRoles.has(who)) errors.push(`${at}.${fn}: nobody in this project runs ${who}; an owner or member must run it (people), or name a person`);
       if (kind === "person" && anyAi.has(lower(who))) errors.push(`${at}.${fn}: "${who}" is an AI account; person: must name a human`);
       if (kind === "person" && !people.has(lower(who))) errors.push(`${at}.${fn}: "${who}" is not an owner or member of this project`);
+      }
     }
-    const d = p.covers.decision;
-    if (d && !d.startsWith("person:")) errors.push(`${at}.decision must be a person: spend, releases, access and irreversible actions are never an AI's call`);
-    else if (d && !p.owners.map(lower).includes(lower(d.split(":")[1]))) errors.push(`${at}.decision must be an owner of the project`);
+    // Decisions may be shared by several people, and split by area (for example merges and spend). Every decider is a human owner.
+    const owners = p.owners.map(lower);
+    for (const d of [].concat(p.covers.decision ?? [])) {
+      if (!d.startsWith("person:")) errors.push(`${at}.decision must be a person: spend, releases, access and irreversible actions are never an AI's call`);
+      else if (!owners.includes(lower(d.split(":")[1]))) errors.push(`${at}.decision must be an owner of the project (${d})`);
+    }
+    for (const [area, v] of Object.entries(p.decision_areas ?? {})) for (const d of [].concat(v)) {
+      const who = d.split(":")[1];
+      if (anyAi.has(lower(who))) errors.push(`${at}.decision_areas.${area}: "${who}" is an AI account; deciders are humans`);
+      else if (!owners.includes(lower(who))) errors.push(`${at}.decision_areas.${area}: "${who}" must be an owner of the project`);
+    }
   }
 
   const seen = new Map();
