@@ -17,7 +17,7 @@
       "account": "acme-qa-bot"
     },
     "security-lead": {
-      "enabled": false
+      "account": "acme-security-bot"
     },
     "researcher": {
       "account": "acme-research-bot"
@@ -39,7 +39,8 @@
     "acme-research-bot",
     "sam-dev-bot-1",
     "sam-dev-bot-2",
-    "sam-dev-bot-3"
+    "sam-dev-bot-3",
+    "acme-security-bot"
   ],
   "projects": {
     "notes": {
@@ -55,7 +56,13 @@
       "testing": "active",
       "watch": "review",
       "lead": "acme-techlead-bot",
-      "merge": "lead-on-owner-word"
+      "merge": "lead-on-owner-word",
+      "covers": {
+        "review": "role:tech-lead",
+        "test": "role:qa-lead",
+        "security": "role:security-lead",
+        "decision": "person:dana-owner"
+      }
     },
     "tasks": {
       "name": "Acme Tasks",
@@ -72,7 +79,13 @@
       "merge": "owner-only",
       "members": [
         "sam-dev"
-      ]
+      ],
+      "covers": {
+        "review": "role:tech-lead",
+        "test": "person:dana-owner",
+        "security": "role:security-lead",
+        "decision": "person:dana-owner"
+      }
     }
   },
   "mode": "team",
@@ -85,6 +98,10 @@
         {
           "name": "ai-developer",
           "account": "acme-dev-bot"
+        },
+        {
+          "name": "security-lead",
+          "account": "acme-security-bot"
         }
       ]
     },

@@ -14,6 +14,9 @@ const build = (patch = (x) => x) => {
   raw.projects.notes.merge = "lead-on-owner-word";
   raw.projects.notes.members = ["sam-dev"];
   raw.projects.tasks.lead = "lead-bot";
+  const covers = { review: "role:tech-lead", test: "role:qa-lead", security: "role:security-lead", decision: "person:dana-owner" };
+  raw.projects.notes.covers = { ...covers };
+  raw.projects.tasks.covers = { ...covers };
   const { errors, config } = validateConfig(patch(raw));
   if (errors.length) throw new Error(errors.join("; "));
   return config;
@@ -64,7 +67,6 @@ test("a person may run several AI developers and skip other roles", () => {
   assert.equal(workersOf(c, "someone-else").length, c.roles.length);
   const res = checkPolicy(c);
   assert.deepEqual(res.errors, []);
-  assert.ok(res.warnings.some((w) => /no qa-lead/.test(w)));
 });
 
 test("people errors: unknown role, shared account, unknown account", () => {
@@ -90,4 +92,23 @@ test("doctor reports problems and the person's view", () => {
   assert.ok(lines.some((l) => /notes: member/.test(l)));
   const bad = doctor({ config: build((r) => { delete r.projects.tasks.lead; return r; }), log: (l) => lines.push(l) });
   assert.equal(bad.errors.length, 1);
+});
+
+test("every function must be covered in every project; a check alone never covers one", () => {
+  const miss = checkPolicy(build((r) => { delete r.projects.notes.covers.security; return r; })).errors.join(String.fromCharCode(10));
+  assert.match(miss, /covers.security is missing/);
+  assert.throws(() => build((r) => { r.projects.notes.covers.test = "check:ci"; return r; }), /must be "role:<role>" or "person:<handle>"/);
+  assert.throws(() => build((r) => { r.projects.notes.covers.lunch = "role:tech-lead"; return r; }), /unknown function/);
+});
+
+test("a covering role must fit the function and be run by somebody; a person must belong to the project", () => {
+  assert.match(checkPolicy(build((r) => { r.projects.notes.covers.test = "role:researcher"; return r; })).errors.join(String.fromCharCode(10)), /does not do test/);
+  assert.match(checkPolicy(build((r) => { r.roles = ["tech-lead", "ai-developer"]; return r; })).errors.join(String.fromCharCode(10)), /nobody runs the role "qa-lead"/);
+  assert.match(checkPolicy(build((r) => { r.projects.notes.covers.test = "person:stranger"; return r; })).errors.join(String.fromCharCode(10)), /not an owner or member/);
+  assert.deepEqual(checkPolicy(build((r) => { r.projects.notes.covers.test = "person:sam-dev"; return r; })).errors, []);
+});
+
+test("the decision is always an owner, never an AI", () => {
+  assert.match(checkPolicy(build((r) => { r.projects.notes.covers.decision = "role:tech-lead"; return r; })).errors.join(String.fromCharCode(10)), /decision must be a person/);
+  assert.match(checkPolicy(build((r) => { r.projects.notes.covers.decision = "person:sam-dev"; return r; })).errors.join(String.fromCharCode(10)), /must be an owner/);
 });

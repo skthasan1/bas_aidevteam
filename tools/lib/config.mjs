@@ -4,6 +4,8 @@ import fs from "node:fs";
 export const ROLE_NAMES = ["tech-lead", "ai-developer", "qa-lead", "security-lead", "researcher"];
 export const TESTING = ["active", "hold", "later"];
 export const WATCH = ["merge", "review", "off"];
+// The functions every project must cover. Each is covered by a role (an AI worker somebody runs) or a named person, never by a check alone.
+export const FUNCTIONS = ["review", "test", "security", "decision"];
 export const MODES = ["solo", "team"];
 // Who may merge in a project: only a person, the lead AI once the written conditions hold, or the lead AI only on the owner's word each time.
 export const MERGE = ["owner-only", "lead-after-conditions", "lead-on-owner-word"];
@@ -84,10 +86,16 @@ export function validateConfig(raw) {
       const merge = p.merge ?? "owner-only";
       if (!MERGE.includes(merge)) errors.push(`${at}.merge must be one of ${MERGE.join(", ")}`);
       if (p.lead !== undefined && (typeof p.lead !== "string" || !HANDLE_RE.test(p.lead))) errors.push(`${at}.lead must be one handle (the project's lead AI account)`);
+      const covers = p.covers ?? {};
+      if (!isObj(covers)) errors.push(`${at}.covers must be an object {review, test, security, decision}`);
+      else for (const [fn, v] of Object.entries(covers)) {
+        if (!FUNCTIONS.includes(fn)) errors.push(`${at}.covers: unknown function "${fn}" (known: ${FUNCTIONS.join(", ")})`);
+        else if (typeof v !== "string" || !/^(role:[a-z-]+|person:[A-Za-z0-9-]+)$/.test(v)) errors.push(`${at}.covers.${fn} must be "role:<role>" or "person:<handle>"`);
+      }
       const members = p.members ?? [];
       if (!Array.isArray(members)) errors.push(`${at}.members must be an array of handles`);
       else for (const h of members) if (typeof h !== "string" || !HANDLE_RE.test(h)) errors.push(`${at}.members: invalid handle ${JSON.stringify(h)}`);
-      projects[id] = { ...p, default: p.default ?? Object.values(p.repos ?? {})[0], testing, watch, merge, lead: p.lead ?? "", members: Array.isArray(members) ? members : [] };
+      projects[id] = { ...p, default: p.default ?? Object.values(p.repos ?? {})[0], testing, watch, merge, covers: isObj(covers) ? covers : {}, lead: p.lead ?? "", members: Array.isArray(members) ? members : [] };
     }
   }
 

@@ -40,8 +40,8 @@ You do not need five sessions on day one. Combine like this.
 
 | Organization size | Sessions | How |
 |---|---|---|
-| One owner, one product | 2 | Tech lead (also covers security checks), AI developer (also does basic QA by running the tests) |
-| One owner, a few products | 3 | Tech lead, AI developer, QA lead |
+| One owner, one product | 2 | Tech lead, AI developer. The owner names themselves as the person who covers test and security (see below) and does that work |
+| One owner, a few products | 3 | Tech lead, AI developer, QA lead. The owner covers security |
 | Owner and one or two human developers | 4 | Tech lead, one AI developer per human developer, QA lead |
 | A regulated or client-facing product | 5 or more | Add the security lead; add the researcher when you have ideas to evaluate |
 
@@ -52,6 +52,10 @@ Rules for combining:
 - **Keep the researcher separate** from the developer. Why: the researcher's value is an independent verdict.
 - A combined role still keeps the permissions of the stricter half.
 - Each session is still separate: its own folder, ports, database and identity. Combining roles means one brief covers two jobs, not two jobs in one shared folder.
+
+### Four functions are never optional
+
+No project goes without review, test, security and decision. You may skip a role, but not the function. In each project's `covers` you name who covers each one: an AI role somebody runs (`role:qa-lead`) or a named person in the project (`person:<handle>`). The decision is always a project owner. A check alone (CI, a template) supports a function but never covers it. `tools/doctor.mjs` fails the setup if one is missing. A developer can run three AI developers and no QA lead, as long as the project says who tests (a teammate's QA lead, or that developer themselves).
 
 ## 3. How many sessions to run at first
 

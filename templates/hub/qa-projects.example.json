@@ -1,5 +1,5 @@
 {
-  "note": "Example config. Which repos belong to which project, who owns the code (GitHub handles), whether the QA lead tests it (testing: active | hold | later), and how the tech lead watches pull requests (watch: merge | review | off). Fictional names only; replace everything.",
+  "note": "Example config. Which repos belong to which project, who owns the code (GitHub handles), whether the QA lead tests it (testing: active | hold | later), and how the tech lead watches pull requests (watch: merge | review | off). Fictional names only; replace everything. Policy fields: mode (solo|team); per project lead (the lead AI account), merge (owner-only|lead-after-conditions|lead-on-owner-word), members, and covers (who covers review, test, security and decision: role:<role> or person:<handle>); optional people (which AI workers each person runs).",
   "projects": {
     "acme-notes": {
       "name": "Acme Notes",
@@ -8,10 +8,20 @@
         "notes": "acme-org/notes",
         "notes-api": "acme-org/notes-api"
       },
-      "owners": ["dana-owner"],
+      "owners": [
+        "dana-owner"
+      ],
       "testing": "active",
       "watch": "merge",
-      "note": "Web app and API. Pull requests from the AI developer are tested before merge; human developers' work is tested after merge."
+      "note": "Web app and API. Pull requests from the AI developer are tested before merge; human developers' work is tested after merge.",
+      "lead": "acme-techlead-bot",
+      "merge": "lead-after-conditions",
+      "covers": {
+        "review": "role:tech-lead",
+        "test": "role:qa-lead",
+        "security": "role:security-lead",
+        "decision": "person:dana-owner"
+      }
     },
     "acme-mobile": {
       "name": "Acme Mobile",
@@ -19,10 +29,21 @@
       "repos": {
         "mobile": "acme-org/mobile"
       },
-      "owners": ["dana-owner", "dev-a"],
+      "owners": [
+        "dana-owner",
+        "dev-a"
+      ],
       "testing": "later",
       "watch": "review",
-      "note": "Review and report only until the owner says merge."
+      "note": "Review and report only until the owner says merge.",
+      "lead": "acme-techlead-bot",
+      "merge": "owner-only",
+      "covers": {
+        "review": "role:tech-lead",
+        "test": "role:qa-lead",
+        "security": "role:security-lead",
+        "decision": "person:dana-owner"
+      }
     },
     "acme-labs": {
       "name": "Acme Labs",
@@ -30,20 +51,58 @@
       "repos": {
         "labs": "acme-org/labs"
       },
-      "owners": ["dev-b"],
+      "owners": [
+        "dev-b"
+      ],
       "testing": "hold",
       "watch": "off",
       "confidential": true,
-      "note": "On pause. Confidential from other projects: findings and reports stay in the hub; never name it elsewhere."
+      "note": "On pause. Confidential from other projects: findings and reports stay in the hub; never name it elsewhere.",
+      "lead": "acme-techlead-bot",
+      "merge": "owner-only",
+      "covers": {
+        "review": "role:tech-lead",
+        "test": "role:qa-lead",
+        "security": "role:security-lead",
+        "decision": "person:dev-b"
+      }
     }
   },
   "roles": {
-    "tech-lead": { "github": "acme-techlead-bot" },
-    "ai-developer": { "github": "acme-dev-bot", "folder": "<worktree-path>", "ports": [3100, 3101] },
-    "qa-lead": { "github": "acme-qa-bot", "access": "read" },
-    "security-lead": { "github": "acme-sec-bot", "access": "read" },
-    "researcher": { "github": "acme-research-bot" }
+    "tech-lead": {
+      "github": "acme-techlead-bot"
+    },
+    "ai-developer": {
+      "github": "acme-dev-bot",
+      "folder": "<worktree-path>",
+      "ports": [
+        3100,
+        3101
+      ]
+    },
+    "qa-lead": {
+      "github": "acme-qa-bot",
+      "access": "read"
+    },
+    "security-lead": {
+      "github": "acme-sec-bot",
+      "access": "read"
+    },
+    "researcher": {
+      "github": "acme-research-bot"
+    }
   },
-  "excluded_areas": ["login", "payments", "database schema and migrations", "deployment", "production config"],
-  "deadline_rule": { "enabled": false, "project": "acme-notes", "hours": 12 }
+  "excluded_areas": [
+    "login",
+    "payments",
+    "database schema and migrations",
+    "deployment",
+    "production config"
+  ],
+  "deadline_rule": {
+    "enabled": false,
+    "project": "acme-notes",
+    "hours": 12
+  },
+  "mode": "team"
 }

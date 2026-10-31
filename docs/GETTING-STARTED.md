@@ -27,6 +27,8 @@ You do not need any AI bot account to start reading and planning. You do need th
    - the label sets to create;
    - a checklist of steps only the owner can do.
 
+6. Run `tools/doctor.mjs --config <your config>`. It fails if a project has no lead AI, no named owner, or no one covering review, test, security and decision. Add `--repo <folder>` to check a repository carries the template, the baseline checks and CODEOWNERS, and `--me <your-handle>` to see which projects you own or belong to and what your AI workers may do in each.
+
 Why dry run first: you see exactly what will be written and can fix a wrong config before any file exists.
 
 ## 3. What the owner must do by hand

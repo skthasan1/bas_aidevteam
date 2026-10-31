@@ -1,8 +1,11 @@
 // Project policy checks and the "mine" view: who owns a project, who leads it, who may merge, and what a given person's AI may do there.
 import fs from "node:fs";
 import path from "node:path";
+import { FUNCTIONS } from "./config.mjs";
 
 const lower = (s) => String(s).toLowerCase();
+// Which AI roles can cover each function.
+const ROLE_FOR = { review: ["tech-lead"], test: ["qa-lead"], security: ["security-lead"], decision: [] };
 
 // Role of a person (by handle) in one project: "owner", "member" or "none".
 export function roleIn(project, handle) {
@@ -50,6 +53,24 @@ export function checkPolicy(config) {
     if (p.merge !== "owner-only" && !p.lead) errors.push(`${at}: merge is "${p.merge}" but no lead AI account is named`);
     if (p.merge === "lead-after-conditions" && p.testing === "later") warnings.push(`${at}: the lead merges on conditions but QA testing is "later"; consider "active"`);
   }
+  // Every function must be covered in every project, by a role somebody runs or a named person. A check alone never covers one.
+  const runRoles = new Set([...config.roles.map((r) => r.name), ...Object.values(config.people).flatMap((x) => x.roles.map((w) => w.name))]);
+  for (const [id, p] of Object.entries(config.projects)) {
+    const at = `projects.${id}.covers`;
+    const people = new Set([...p.owners, ...p.members].map(lower));
+    for (const fn of FUNCTIONS) {
+      const v = p.covers[fn];
+      if (!v) { errors.push(`${at}.${fn} is missing: every project must say who covers ${fn} (role:<role> or person:<handle>)`); continue; }
+      const [kind, who] = v.split(":");
+      if (kind === "role" && !ROLE_FOR[fn].includes(who)) errors.push(`${at}.${fn}: role "${who}" does not do ${fn} (use one of ${ROLE_FOR[fn].join(", ")}, or a person)`);
+      else if (kind === "role" && !runRoles.has(who)) errors.push(`${at}.${fn}: nobody runs the role "${who}"; add it to roles or people, or name a person`);
+      if (kind === "person" && !people.has(lower(who))) errors.push(`${at}.${fn}: "${who}" is not an owner or member of this project`);
+    }
+    const d = p.covers.decision;
+    if (d && !d.startsWith("person:")) errors.push(`${at}.decision must be a person: spend, releases, access and irreversible actions are never an AI's call`);
+    else if (d && !p.owners.map(lower).includes(lower(d.split(":")[1]))) errors.push(`${at}.decision must be an owner of the project`);
+  }
+
   const seen = new Map();
   for (const [handle, { roles }] of Object.entries(config.people)) {
     if (roles.length === 0) warnings.push(`people.${handle}: no AI workers chosen`);
@@ -59,9 +80,6 @@ export function checkPolicy(config) {
       if (seen.has(lower(w.account))) errors.push(`people.${handle}: account "${w.account}" is also used by ${seen.get(lower(w.account))}; one identity per AI worker`);
       seen.set(lower(w.account), handle);
     }
-    const names = roles.map((w) => w.name);
-    if (!names.includes("qa-lead")) warnings.push(`people.${handle}: no qa-lead, so tests are this person's own; changes in the sensitive tiers (T2, T3) still need a person's own read`);
-    if (!names.includes("security-lead")) warnings.push(`people.${handle}: no security-lead; use the pull request template's security section and the baseline checks`);
   }
   return { errors, warnings };
 }

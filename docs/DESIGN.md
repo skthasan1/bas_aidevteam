@@ -138,3 +138,19 @@ Config fields, all optional so a v0.1 config still loads:
 - `people`: for each person, the AI workers they run. A person picks the roles they need and may run several of one role: a developer can run three `ai-developer` accounts and no QA lead or researcher. A role a person leaves out is a role they do without; `doctor` says what that costs (for example: tests are the person's own, and T2 and T3 changes still need a person's own read).
 
 `tools/doctor.mjs --config <file> [--repo <folder>] [--me <handle>]` checks that the policy is consistent (one lead per project, the lead is an AI account and not a person, a merge watch is only set where merging is allowed, one identity per AI worker, solo means one owner and no members), that a repository carries the template, the baseline checks and CODEOWNERS, and prints the projects a person owns or belongs to with their role and merge power.
+
+### Required functions: no shortcuts (v0.2)
+
+Build@Scale has no shortcuts, so every project must cover four functions, and `doctor` fails the setup when one is missing:
+
+| Function | Covered by (in the project's `covers`) |
+|---|---|
+| `review`: someone other than the author reads the change | `role:tech-lead`, or `person:<handle>` |
+| `test`: the exact version is run and the gaps are written down | `role:qa-lead`, or `person:<handle>` |
+| `security`: secrets, access, tenant boundaries | `role:security-lead`, or `person:<handle>` |
+| `decision`: spend, releases, access, anything irreversible | `person:<owner handle>` only |
+
+- A function is covered by an AI role somebody runs, or by a named person who owns or belongs to the project. A check (CI, a template) supports a function but never covers it alone.
+- A person who skips a role is fine, as long as the project's `covers` names who covers that function instead (a teammate's AI, or the person themselves).
+- The researcher is optional; nothing depends on it.
+- `doctor` fails when: a function is missing; a role does not do that function; nobody runs the named role; a named person is not in the project; the decision names an AI or a non-owner.

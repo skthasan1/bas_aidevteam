@@ -65,5 +65,5 @@ test("ownerLogins merges owner, project owners and AI accounts in lower case", (
 
 test("the acme example config is valid", () => {
   const c = loadConfig(new URL("../examples/acme/qa-projects.json", import.meta.url));
-  assert.deepEqual(c.roles.map((r) => r.name), ["tech-lead", "ai-developer", "qa-lead", "researcher"]);
+  assert.deepEqual(c.roles.map((r) => r.name), ["tech-lead", "ai-developer", "qa-lead", "security-lead", "researcher"]);
 });
