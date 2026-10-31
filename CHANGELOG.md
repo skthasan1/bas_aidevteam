@@ -2,8 +2,11 @@
 
 Purpose: the release history of Build@Scale AI Dev Team. Newest first.
 
-## Unreleased
+## 0.3.0 - 2026-10-31
 
+Every AI gets its own GitHub identity.
+
+Added:
 - AI identities: each worker (organization roles and `people` roles) may have an `app` {id, key_file, owner} and an `identity` ("app" or "machine-user"). `account` stays the bot's login, and `<slug>[bot]` is accepted for accounts, `ai_accounts` and a project's `lead` only. The config holds the key's path, never the key; any other field under `app` is refused.
 - `doctor`: errors when two workers share one App or one account, when an App key file is inside a git repository or the hub or config folder, or is not a `.pem`; a warning for a team worker with no identity (it would act under a person's login). New `--check-keys` checks the key files exist and are not readable by other users (existence only on Windows). Key contents are never read.
 - `tools/as-app.mjs`: runs one command as a worker's own GitHub App (`GH_TOKEN` set to a one-hour token, `GITHUB_TOKEN` removed, no shell, the token never printed). `--dry-run true` shows what would run.
