@@ -53,6 +53,28 @@ Always: Metadata read. Never: Administration, Secrets, Environments, Packages, o
 
 An App has the same permissions on every repository it is installed on. If an AI must only comment on some repositories and push on others, either install it on fewer repositories or register a second App for the second job.
 
+### The same list in the order GitHub's form shows it
+
+When you create or edit an App (Permissions, Repository permissions), set these and leave every other permission at **No access**. "R" is Read-only, "R/W" is Read and write.
+
+| Permission | Tech lead (review only) | Tech lead (may merge) | AI developer | QA lead | Security lead | Researcher |
+|---|---|---|---|---|---|---|
+| Actions | R | R/W | R | R | R | No access |
+| Administration | No access | No access | No access | No access | No access | No access |
+| Checks | R | R | R | R | R | No access |
+| Commit statuses | R | R | R | R | R | No access |
+| Contents | R | R/W | R/W | R | R/W | R/W |
+| Issues | R/W | R/W | R/W | R/W | R/W | R/W |
+| Metadata | R (automatic) | R (automatic) | R (automatic) | R (automatic) | R (automatic) | R (automatic) |
+| Pull requests | R/W | R/W | R/W | R/W | R/W | R/W |
+| Workflows | No access | R/W (only if it edits CI files) | R/W (only if it edits CI files) | No access | No access | No access |
+
+Notes:
+- **Actions R/W** lets an App re-run, cancel, disable and enable workflows. Read is enough to see results.
+- **Workflows R/W** is the only permission that lets an App change files under `.github/workflows/`. Every such change is a pull request a person reads.
+- **Optional for the security lead:** Code scanning alerts: R, Dependabot alerts: R, Secret scanning alerts: R, if you want it to read GitHub's own findings.
+- **Everything else** (Attestations, Codespaces, Custom properties, Dependabot secrets, Deployments, Discussions, Environments, Merge queues, Packages, Pages, Projects, Repository security advisories, Secrets, Variables, Webhooks) stays **No access**. Under Account and Organization permissions, set nothing.
+
 Two permissions deserve care:
 - **Workflows (write)** lets an App change CI files, which run with the repository's secrets. Keep it off unless the AI builds CI, and put every such change through a pull request a person reads (review tier T2).
 - **Actions (write)** lets an App re-run, disable or enable workflows. Reading results needs only Actions read.
