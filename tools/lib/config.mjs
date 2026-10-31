@@ -4,6 +4,9 @@ import fs from "node:fs";
 export const ROLE_NAMES = ["tech-lead", "ai-developer", "qa-lead", "security-lead", "researcher"];
 export const TESTING = ["active", "hold", "later"];
 export const WATCH = ["merge", "review", "off"];
+export const MODES = ["solo", "team"];
+// Who may merge in a project: only a person, the lead AI once the written conditions hold, or the lead AI only on the owner's word each time.
+export const MERGE = ["owner-only", "lead-after-conditions", "lead-on-owner-word"];
 const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const HANDLE_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 
@@ -23,6 +26,9 @@ export function validateConfig(raw) {
   if (raw.owner !== undefined && !isObj(raw.owner)) errors.push("owner must be an object {name, handles}");
   for (const h of ownerHandles) if (typeof h !== "string" || !HANDLE_RE.test(h)) errors.push(`owner.handles: invalid handle ${JSON.stringify(h)}`);
 
+  const mode = raw.mode ?? "team";
+  if (!MODES.includes(mode)) errors.push(`mode must be one of ${MODES.join(", ")}`);
+
   const roleInput = raw.roles ?? ROLE_NAMES;
   const roles = [];
   const addRole = (name, account) => {
@@ -37,6 +43,25 @@ export function validateConfig(raw) {
       addRole(name, isObj(v) ? v.account : undefined);
     }
   } else errors.push("roles must be an array of role names or an object");
+
+  // Optional: which AI workers each person runs. A person picks the roles they need and may run several of one role,
+  // for example three ai-developer accounts and no qa-lead. Without "people", every role above belongs to the organization.
+  const people = {};
+  if (raw.people !== undefined && !isObj(raw.people)) errors.push("people must be an object: handle -> { roles: [...] }");
+  else for (const [handle, v] of Object.entries(raw.people ?? {})) {
+    if (!HANDLE_RE.test(handle)) { errors.push(`people: invalid handle ${JSON.stringify(handle)}`); continue; }
+    const list = isObj(v) ? v.roles : undefined;
+    if (!Array.isArray(list)) { errors.push(`people.${handle}.roles must be an array of role names or {name, account}`); continue; }
+    const workers = [];
+    for (const r of list) {
+      const name = typeof r === "string" ? r : r?.name;
+      const account = typeof r === "string" ? "" : (r?.account ?? "");
+      if (!ROLE_NAMES.includes(name)) { errors.push(`people.${handle}: unknown role "${name}" (known: ${ROLE_NAMES.join(", ")})`); continue; }
+      if (account !== "" && (typeof account !== "string" || !HANDLE_RE.test(account))) { errors.push(`people.${handle}.${name}: invalid account`); continue; }
+      workers.push({ name, account });
+    }
+    people[handle] = { roles: workers };
+  }
 
   const projects = {};
   if (!isObj(raw.projects) || Object.keys(raw.projects).length === 0) errors.push("projects must be an object with at least one project");
@@ -56,7 +81,13 @@ export function validateConfig(raw) {
       const watch = p.watch ?? "off";
       if (!WATCH.includes(watch)) errors.push(`${at}.watch must be one of ${WATCH.join(", ")}`);
       if (p.watch === undefined) warnings.push(`${at}.watch not set, treated as off`);
-      projects[id] = { ...p, default: p.default ?? Object.values(p.repos ?? {})[0], testing, watch };
+      const merge = p.merge ?? "owner-only";
+      if (!MERGE.includes(merge)) errors.push(`${at}.merge must be one of ${MERGE.join(", ")}`);
+      if (p.lead !== undefined && (typeof p.lead !== "string" || !HANDLE_RE.test(p.lead))) errors.push(`${at}.lead must be one handle (the project's lead AI account)`);
+      const members = p.members ?? [];
+      if (!Array.isArray(members)) errors.push(`${at}.members must be an array of handles`);
+      else for (const h of members) if (typeof h !== "string" || !HANDLE_RE.test(h)) errors.push(`${at}.members: invalid handle ${JSON.stringify(h)}`);
+      projects[id] = { ...p, default: p.default ?? Object.values(p.repos ?? {})[0], testing, watch, merge, lead: p.lead ?? "", members: Array.isArray(members) ? members : [] };
     }
   }
 
@@ -67,6 +98,8 @@ export function validateConfig(raw) {
   const config = errors.length ? null : {
     ...raw,
     organization: org,
+    mode,
+    people,
     owner: { name: owner.name ?? "", handles: ownerHandles },
     roles,
     projects,

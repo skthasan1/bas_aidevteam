@@ -129,3 +129,12 @@ Rules that hold in both modes:
 - Two leads that disagree escalate to the project owner; neither overrides the other.
 - Growing from solo to team changes the config and adds people; no file is rewritten.
 - `doctor` checks that each project names exactly one owner and one lead, and that guardrails work without a person watching.
+
+### Policy, people and AI workers (implemented in v0.2)
+
+Config fields, all optional so a v0.1 config still loads:
+- `mode`: `solo` or `team` (default `team`).
+- per project: `lead` (the project's lead AI account), `merge` (`owner-only`, `lead-after-conditions` or `lead-on-owner-word`; default `owner-only`), `members` (people who belong but do not own).
+- `people`: for each person, the AI workers they run. A person picks the roles they need and may run several of one role: a developer can run three `ai-developer` accounts and no QA lead or researcher. A role a person leaves out is a role they do without; `doctor` says what that costs (for example: tests are the person's own, and T2 and T3 changes still need a person's own read).
+
+`tools/doctor.mjs --config <file> [--repo <folder>] [--me <handle>]` checks that the policy is consistent (one lead per project, the lead is an AI account and not a person, a merge watch is only set where merging is allowed, one identity per AI worker, solo means one owner and no members), that a repository carries the template, the baseline checks and CODEOWNERS, and prints the projects a person owns or belongs to with their role and merge power.
