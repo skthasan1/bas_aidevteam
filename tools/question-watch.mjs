@@ -39,13 +39,23 @@ export function questionWatch({ config, projectId, gh, stateDir = ".state", sinc
     const file = `question-watch-${id}`;
     const state = readState(stateDir, file, null);
     const from = since || state?.lastRun || new Date(now.getTime() - 864e5).toISOString();
-    const owners = ownerLogins(config, project);
+    // Our own AI identities are never "outside" askers: role accounts, worker accounts under people, and every project's lead.
+    const owners = new Set([
+      ...ownerLogins(config, project),
+      ...config.roles.map((r) => r.account),
+      ...Object.values(config.people ?? {}).flatMap((x) => x.roles.map((w) => w.account)),
+      ...Object.values(config.projects).map((p) => p.lead),
+    ].filter(Boolean).map((s) => s.toLowerCase()));
+    const fromMs = Date.parse(from);
     let ok = true;
     for (const repo of reposOf(project)) {
       for (const kind of ["issues/comments", "pulls/comments"]) {
         let list;
         try { list = fetchComments(gh, repo, kind, from); } catch (e) { result.errors.push(`${repo} (${kind}): ${e.message}`); ok = false; continue; }
         for (const c of list) {
+          // The API filters on the update time, so an old comment that was merely edited comes back: only comments created since count.
+          const created = Date.parse(c.created_at);
+          if (!Number.isNaN(fromMs) && !Number.isNaN(created) && created < fromMs) continue;
           if (!isCandidate(c, { owners, bots, prefixes })) continue;
           result.candidates.push({ project: id, repo, kind, author: c.user.login, at: c.created_at, url: c.html_url, text: String(c.body ?? "").replace(/\s+/g, " ").trim().slice(0, 160) });
         }
@@ -67,8 +77,8 @@ export function formatQuestionWatch(r) {
 }
 
 async function main() {
-  const { positional, flags } = parseArgs(process.argv.slice(2), ["dry-run", "no-save"]);
   try {
+    const { positional, flags } = parseArgs(process.argv.slice(2), ["dry-run", "no-save"]);
     const config = loadConfig(flags.config || "qa-projects.json");
     const gh = createGh({ dryRun: !!flags["dry-run"] });
     const r = questionWatch({ config, projectId: positional[0], gh, stateDir: flags["state-dir"] || ".state", since: typeof flags.since === "string" ? flags.since : undefined, save: !flags["no-save"] });

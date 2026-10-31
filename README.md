@@ -10,7 +10,7 @@ Once you build with one AI agent, the next step is several. Without rules, sever
 
 **Build@Scale AI Dev Team** (short: BAS AI Dev Team) gives you the rules, the roles and the small tools to run a few AI sessions as a real team. Each AI has one job, one identity, one workspace and one list of things it must never do. People stay in charge of approvals, releases, spending and access. GitHub is the shared record, so human developers and other people's AI teams can work with yours.
 
-It is a sibling of **Build@Scale with AI**. That one makes a single project production-ready. This one runs a team across many projects.
+It is a sibling of **Build@Scale with AI** (https://github.com/skthasan1/buildatscale). That one makes a single project production-ready. This one runs a team across many projects.
 
 ---
 
@@ -27,14 +27,14 @@ You do not need to write code. You do need to be comfortable with a terminal, Gi
 
 ## What you get
 
-- **Five roles**, each with a brief, a permission contract and a start-up message.
+- **Up to five roles**, each with a brief, a permission contract and a start-up message. You pick the roles you run, but four functions (review, test, security, decision) must always be covered.
 - **A hub**: a local folder that holds the runbook, the config, a queue of decisions for people, and daily briefings.
 - **A protocol** for GitHub: how an AI signs a review, what a clearance must say, when an earlier clearance may be carried forward, who owns which area.
 - **A developer kit**: branch per issue, test first, small pull requests, review tiers.
 - **A QA kit**: test strategy, report and finding templates, a UI-standards checklist.
 - **A researcher kit**: a pipeline for testing outside ideas blind, with a registry and a rule that every judged test ends in an action.
 - **Watches**: small scripts that tell the tech lead session when a pull request or a question needs attention.
-- **An onboarding script** that builds your hub and tells you the steps only you can do.
+- **An onboarding script** that builds your hub and tells you the steps only you can do, and **a `doctor` check** that fails the setup when a project has no one covering review, test, security or decision.
 - **A security model** that covers identities, tokens, spending and confidentiality between projects.
 
 ---
@@ -55,7 +55,7 @@ Replace `<kit-repository-url>` with the address of this repository.
 
 Copy the example config from `examples/` to your own file and fill in your organization, repositories, people and the roles you want. Then run `tools/onboard.mjs` with your config (use its help option to see the exact options).
 
-By default it only shows what it would create. Read the output. When it looks right, run it again with the apply option. It creates your hub folder, the role briefs and the repository files to copy. It never creates accounts and never touches a token.
+By default it only shows what it would create. Read the output. When it looks right, run it again with the apply option. It creates your hub folder, the role briefs and a checklist of what only you can do (including which files from `templates/repo` to copy into each repository). It never creates accounts and never touches a token.
 
 ### Step 3 - Start the first role sessions
 
@@ -86,7 +86,7 @@ Details and how to combine roles: [docs/ROLES.md](docs/ROLES.md).
 - [docs/PROTOCOL.md](docs/PROTOCOL.md) - the interop specification
 - [docs/SECURITY-MODEL.md](docs/SECURITY-MODEL.md) - identities, tokens, secrets, destructive actions, walls between projects
 - [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) - onboarding walkthrough
-- [docs/ROLES.md](docs/ROLES.md) - the five roles
+- [docs/ROLES.md](docs/ROLES.md) - the roles and the four required functions
 - [CHANGELOG.md](CHANGELOG.md) - release history
 
 ---

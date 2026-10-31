@@ -17,8 +17,8 @@ const blind = {
   board: { rows: [{ idea: "SECRET-IDEA", verdict: "adopt", evidence: "e" }] },
   review: { compare: "Two ways.", questions: ["Which is better?"], guess: "Which is new?", people: 3 },
   sections: [{ tag: "T1", title: "Pairs", cost: "$9.99", items: [
-    { kind: "image", path: "media/x1.png", caption: "A: vague" },
-    { kind: "image", path: "media/x2.png", caption: "B: exact" },
+    { kind: "image", path: "media/t1-1.png", caption: "A: vague" },
+    { kind: "image", path: "media/t1-2.png", caption: "B: exact" },
   ] }],
 };
 
@@ -53,11 +53,43 @@ test("blind page without a review block fails to build", () => {
   assert.throws(() => buildPage({ ...blind, review: { compare: "x", questions: [], guess: "g" } }), /questions/);
 });
 
-test("blind page warns when a path gives the variant away", () => {
-  const spec = { ...blind, sections: [{ title: "P", items: [{ kind: "image", path: "media/pic-A.png" }, { kind: "image", path: "media/t1-2.png" }] }] };
-  const { warnings } = buildPage(spec);
-  assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /pic-A\.png/);
+const withItems = (...paths) => ({ ...blind, sections: [{ title: "P", items: paths.map((p) => ({ kind: "image", path: p })) }] });
+
+test("blind page fails when a path is not a neutral name", () => {
+  assert.throws(() => buildPage(withItems("media/pic-A.png")), /neutral name/);
+  assert.throws(() => buildPage(withItems("media/photo.png")), /neutral name/);
+  assert.doesNotThrow(() => buildPage(withItems("media/t1-1.png", "t1-2.mp4")));
+});
+
+test("blind page fails when a path contains a hint word, even with a neutral tail", () => {
+  assert.throws(() => buildPage(withItems("control/t1-1.png")), /hint word "control"/);
+  assert.throws(() => buildPage(withItems("variant/t1-1.png")), /hint word "variant"/);
+});
+
+test("blind page fails when visible text carries a hint word", () => {
+  for (const field of ["title", "heading", "lede"]) {
+    assert.throws(() => buildPage({ ...blind, [field]: "The new wording" }), new RegExp(`${field} contains the hint word "new"`));
+  }
+  const sec = (extra) => ({ ...blind, sections: [{ title: "P", ...extra, items: [{ kind: "image", path: "media/t1-1.png" }] }] });
+  assert.throws(() => buildPage(sec({ title: "Baseline" })), /section 1 title/);
+  assert.throws(() => buildPage(sec({ text: "Variant shown here" })), /section 1 text/);
+  assert.throws(() => buildPage(sec({ question: "Is the old one worse?" })), /section 1 question/);
+  assert.doesNotThrow(() => buildPage(sec({ text: "Plain wording", question: "Is the sign right?" })));
+});
+
+test("every page fails on a media path with a URL scheme, '..' or a leading slash", () => {
+  const bads = ["javascript:alert(1)", "data:image/png;base64,AAAA", "http://example.com/x.png", "../secret/x.png", "media/../x.png", "/etc/x.png", "C:\\x.png"];
+  for (const bad of bads) {
+    const one = { kind: "image", path: bad };
+    assert.throws(() => buildPage({ ...named, sections: [{ title: "P", items: [one] }] }), /media path/, bad);
+    assert.throws(() => buildPage({ ...blind, sections: [{ title: "P", items: [one] }] }), /media path/, bad);
+  }
+});
+
+test("unknown verdicts fall back to Inconclusive; there is no hidden Found chip", () => {
+  const { html } = buildPage({ ...named, board: { rows: [{ idea: "i", verdict: "found" }] } });
+  assert.match(html, /class="chip inconclusive"/);
+  assert.doesNotMatch(html, /Found/);
 });
 
 test("text is escaped", () => {
@@ -83,5 +115,7 @@ test("cli writes a file; a bad blind spec exits 1", () => {
 test("the shipped example spec builds", () => {
   const spec = JSON.parse(fs.readFileSync(path.resolve("research/templates/evidence-spec.example.json"), "utf8"));
   assert.doesNotThrow(() => buildPage(spec));
-  assert.doesNotThrow(() => buildPage({ ...spec, blind: true }));
+  const noText = { ...spec, blind: true, sections: spec.sections.map(({ text, ...s }) => s) };
+  assert.doesNotThrow(() => buildPage(noText));
+  assert.ok(!("layout" in spec.sections[0]));
 });

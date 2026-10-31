@@ -112,3 +112,41 @@ test("the decision is always an owner, never an AI", () => {
   assert.match(checkPolicy(build((r) => { r.projects.notes.covers.decision = "role:tech-lead"; return r; })).errors.join(String.fromCharCode(10)), /decision must be a person/);
   assert.match(checkPolicy(build((r) => { r.projects.notes.covers.decision = "person:sam-dev"; return r; })).errors.join(String.fromCharCode(10)), /must be an owner/);
 });
+
+const joined = (c) => checkPolicy(c).errors.join(String.fromCharCode(10));
+
+test("a person (owner, member, person: cover) must not be an AI account", () => {
+  assert.match(joined(build((r) => { r.projects.notes.members = ["dev-bot-1"]; return r; })), /"dev-bot-1" is an AI account but is listed as an owner or member/);
+  assert.match(joined(build((r) => { r.projects.tasks.owners = ["dana-owner", "lead-bot"]; return r; })), /"lead-bot" is an AI account/);
+  assert.match(joined(build((r) => { r.people = { x: { roles: [{ name: "ai-developer", account: "dev-bot-2" }] } }; r.projects.notes.members = ["dev-bot-2"]; return r; })), /"dev-bot-2" is an AI account/);
+  assert.match(joined(build((r) => { r.projects.notes.members = ["sam-dev", "lead-bot"]; r.projects.notes.covers.test = "person:lead-bot"; return r; })), /person: must name a human/);
+});
+
+test("the lead is not the owner or any person in people", () => {
+  assert.match(joined(build((r) => { r.ai_accounts.push("pat"); r.people = { pat: { roles: ["tech-lead"] } }; r.projects.tasks.lead = "pat"; return r; })), /tasks\.lead "pat" is also listed as a person/);
+  assert.match(joined(build((r) => { r.ai_accounts.push("dana-owner"); r.projects.tasks.owners = ["x1"]; r.projects.tasks.covers.decision = "person:x1"; r.projects.tasks.covers.test = "person:x1"; r.projects.tasks.lead = "dana-owner"; return r; })), /tasks\.lead "dana-owner" is also listed as a person/);
+});
+
+test("solo needs a lead only when merge is not owner-only", () => {
+  const solo = (patch) => build((r) => { r.mode = "solo"; r.projects.notes.members = []; return patch(r); });
+  assert.deepEqual(checkPolicy(solo((r) => { delete r.projects.tasks.lead; delete r.projects.notes.lead; r.projects.notes.merge = "owner-only"; return r; })).errors, []);
+  assert.match(joined(solo((r) => { delete r.projects.notes.lead; return r; })), /merge is "lead-on-owner-word" but no lead AI account is named/);
+});
+
+test("role:X must be run by somebody in this project when people are listed", () => {
+  const withPeople = (patch = (x) => x) => build((r) => {
+    r.people = { "dana-owner": { roles: ["tech-lead", "security-lead"] }, "sam-dev": { roles: [{ name: "qa-lead", account: "dev-bot-1" }] }, "elsewhere": { roles: ["qa-lead"] } };
+    r.projects.tasks.members = ["sam-dev"];
+    return patch(r);
+  });
+  // notes: only dana-owner (no qa-lead) and member sam-dev, who runs qa-lead
+  assert.deepEqual(checkPolicy(withPeople()).errors, []);
+  // tasks has no sam-dev: a qa-lead exists in the organization, but nobody in the tasks project runs it
+  const e = joined(withPeople((r) => { r.projects.tasks.members = []; return r; }));
+  assert.match(e, /tasks\.covers\.test: nobody in this project runs qa-lead/);
+  assert.doesNotMatch(e, /notes\.covers/);
+  // an owner without a people entry uses the organization-level roles
+  assert.deepEqual(checkPolicy(withPeople((r) => { r.projects.tasks.owners = ["no-entry"]; r.projects.tasks.members = []; r.projects.tasks.covers.decision = "person:no-entry"; return r; })).errors, []);
+  // ... but a member without an entry gets nothing
+  assert.match(joined(withPeople((r) => { r.projects.tasks.members = ["no-entry-member"]; r.projects.tasks.owners = ["dana-owner"]; return r; })), /tasks\.covers\.test: nobody in this project runs qa-lead/);
+});

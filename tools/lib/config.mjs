@@ -103,6 +103,24 @@ export function validateConfig(raw) {
     if (raw[k] !== undefined && (!Array.isArray(raw[k]) || !raw[k].every((s) => typeof s === "string"))) errors.push(`${k} must be an array of strings`);
   }
 
+  const regexOk = (s) => { try { new RegExp(s, "i"); return true; } catch { return false; } };
+  if (raw.pr_watch !== undefined) {
+    if (!isObj(raw.pr_watch)) errors.push("pr_watch must be an object {skip_authors, skip_titles}");
+    else {
+      const { skip_authors: sa, skip_titles: st } = raw.pr_watch;
+      if (sa !== undefined && (!Array.isArray(sa) || !sa.every((s) => typeof s === "string"))) errors.push("pr_watch.skip_authors must be an array of strings");
+      if (st !== undefined && (!Array.isArray(st) || !st.every((s) => typeof s === "string"))) errors.push("pr_watch.skip_titles must be an array of regular expression strings");
+      else for (const s of st ?? []) if (!regexOk(s)) errors.push(`pr_watch.skip_titles: ${JSON.stringify(s)} is not a valid regular expression`);
+    }
+  }
+  if (raw.merge_watch !== undefined) {
+    if (!isObj(raw.merge_watch)) errors.push("merge_watch must be an object {qa_pending_pattern}");
+    else {
+      const q = raw.merge_watch.qa_pending_pattern;
+      if (q !== undefined && (typeof q !== "string" || !regexOk(q))) errors.push(`merge_watch.qa_pending_pattern ${JSON.stringify(q)} is not a valid regular expression`);
+    }
+  }
+
   const config = errors.length ? null : {
     ...raw,
     organization: org,

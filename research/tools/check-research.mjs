@@ -25,7 +25,9 @@ function walk(dir, files = []) {
 export function checkRegistry(file) {
   if (!file || !fs.existsSync(file)) return [];
   const problems = [];
-  for (const t of loadRegistry(file).tests) {
+  let reg;
+  try { reg = loadRegistry(file); } catch (err) { return [`${file}: ${err.message}`]; }
+  for (const t of reg.tests) {
     const action = typeof t.action === "string" ? t.action.trim() : "";
     if (t.status === "judged" && !action) problems.push(`${file}: ${t.id} is judged but has no action line (issue reference or "no action: <reason>")`);
   }
@@ -37,6 +39,10 @@ export function checkEvidence(dir) {
   for (const f of walk(dir).filter((x) => x.endsWith(".json"))) {
     let spec;
     try { spec = JSON.parse(fs.readFileSync(f, "utf8")); } catch { problems.push(`${f}: not valid JSON`); continue; }
+    if (spec && spec.blind !== undefined && typeof spec.blind !== "boolean") {
+      problems.push(`${f}: "blind" must be true or false, not ${JSON.stringify(spec.blind)}`);
+      continue;
+    }
     if (spec && spec.blind === true) {
       for (const p of reviewProblems(spec)) problems.push(`${f}: blind spec: ${p}`);
     }
@@ -50,8 +56,24 @@ export function checkMedia(root) {
     .map((f) => `${f}: media file in the research folder (media never go into git)`);
 }
 
+const KEY_WORDS = new Set(["key", "answerkey", "decode", "unblind"]);
+
+// A file whose name looks like a blind key (answer-key.json, decode.csv, unblind.txt) must not sit next to a blind sheet.
+export function checkKeyNames(dir) {
+  return walk(dir)
+    .filter((f) => {
+      const stem = path.basename(f).toLowerCase().replace(/\.[a-z0-9]+$/, "");
+      return stem.split(/[^a-z]+/).some((t) => KEY_WORDS.has(t)) || KEY_WORDS.has(stem.replace(/[^a-z]/g, ""));
+    })
+    .map((f) => `${f}: file name looks like a blind key (keep keys outside the repository and outside the review folder)`);
+}
+
 export function checkResearch({ registry, evidence, root }) {
-  return [...checkRegistry(registry), ...checkEvidence(evidence), ...checkMedia(root)];
+  return [...new Set([
+    ...checkRegistry(registry), ...checkEvidence(evidence),
+    ...checkMedia(root), ...checkMedia(evidence),
+    ...checkKeyNames(root), ...checkKeyNames(evidence),
+  ])];
 }
 
 function arg(name) {

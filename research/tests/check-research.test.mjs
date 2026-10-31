@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
-import { checkRegistry, checkEvidence, checkMedia, checkResearch } from "../tools/check-research.mjs";
+import { checkRegistry, checkEvidence, checkMedia, checkKeyNames, checkResearch } from "../tools/check-research.mjs";
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "chk-"));
 const write = (dir, name, content) => {
@@ -64,4 +64,46 @@ test("cli exits 1 on a problem and 0 when clean", () => {
   fs.writeFileSync(reg, JSON.stringify({ tests: [{ id: "R-1", status: "judged", action: "no action: x" }] }));
   const out = execFileSync(process.execPath, [script, "--registry", reg, "--root", d], { encoding: "utf8" });
   assert.match(out, /ok/);
+});
+
+test("registry: malformed JSON is a clear problem, not a stack trace (also on the CLI)", () => {
+  const d = tmp();
+  const bad = write(d, "bad.json", "{ nope");
+  const problems = checkRegistry(bad);
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /not valid JSON/);
+  const r = spawnSync(process.execPath, [path.resolve("research/tools/check-research.mjs"), "--registry", bad, "--root", d], { encoding: "utf8" });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /FAIL .*not valid JSON/);
+  assert.doesNotMatch(r.stderr, /\n\s+at /);
+});
+
+test("evidence: a non-boolean blind value is rejected", () => {
+  const d = tmp();
+  write(d, "s1.json", { blind: "true", sections: [] });
+  write(d, "s2.json", { blind: 1, sections: [] });
+  write(d, "s3.json", { blind: false, sections: [] });
+  const problems = checkEvidence(d);
+  assert.ok(problems.some((p) => p.includes("s1.json") && /"blind" must be true or false/.test(p)));
+  assert.ok(problems.some((p) => p.includes("s2.json")));
+  assert.ok(!problems.some((p) => p.includes("s3.json")));
+});
+
+test("key-like file names are flagged; ordinary names are not", () => {
+  const d = tmp();
+  for (const n of ["answer-key.json", "decode.csv", "Unblind.txt", "sheet_key.md"]) write(d, n, "x");
+  for (const n of ["monkey.md", "keyboard.md", "notes.md"]) write(d, n, "x");
+  const hits = checkKeyNames(d).map((p) => path.basename(p.split(": ")[0]));
+  assert.deepEqual(hits.sort(), ["Unblind.txt", "answer-key.json", "decode.csv", "sheet_key.md"].sort());
+});
+
+test("checkResearch scans the evidence directory for media and key files, once each", () => {
+  const d = tmp();
+  const ev = path.join(d, "ev");
+  write(ev, "photo.png", "x");
+  write(ev, "answer-key.json", { x: 1 });
+  assert.equal(checkResearch({ evidence: ev, root: d }).length, 2);
+  const ev2 = path.join(tmp(), "ev");
+  write(ev2, "clip.mp4", "x");
+  assert.equal(checkResearch({ evidence: ev2, root: tmp() }).length, 1);
 });

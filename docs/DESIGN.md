@@ -1,6 +1,6 @@
-# Build@Scale AI Dev Team: design (v0.1 draft)
+# Build@Scale AI Dev Team: design
 
-> Status: draft written 2026-10-31 for review. Everything in this repository must be safe to publish: no real names, no project names, no keys or tokens, no private decisions.
+> Status: first release. Everything in this repository must be safe to publish: no real names, no project names, no keys or tokens, no private decisions.
 
 ## 1. What this is
 
@@ -38,7 +38,7 @@ It is a sibling of **Build@Scale with AI** (`buildatscale`):
 
 An organization may run several developers, or merge two roles at first. A role is a brief plus a permission contract; see `roles/`.
 
-### Scope added by the owner (2026-10-31)
+### Scope
 
 The kit must include **everything the QA lead does** (the QA workspace and its rules, report and finding formats, the UI-standards checklist, the learning inbox), **the researcher's framework** (the research pipeline, blind-test hygiene, the registry, the evidence-page builder, the action-line rule and the review-instructions rule), and **the framework and rules the AI developers follow** (branch per issue, test first, size, overlap and owner check, review tiers, locked decisions, handoff and session notes).
 
@@ -99,19 +99,18 @@ Two teams that follow `docs/PROTOCOL.md` can work together through GitHub while 
 
 ## 7. Onboarding (`tools/onboard.mjs`)
 
-Config-driven, dry run by default. Inputs: organization, repos, people and their areas, roles to enable. Output: a hub folder (runbook, config, queue, briefings), per-role start-up briefs, repo files to copy (PR template, issue templates, CODEOWNERS, baseline CI), label sets to create, and the checklist of steps only the owner can do (accounts, tokens, repository settings). It never creates accounts and never touches a token.
+Config-driven, dry run by default. Inputs: organization, repos, people and their areas, roles to enable. Output: a hub folder (runbook, config, queue, briefings), per-role start-up briefs, and a checklist of steps only the owner can do (accounts, tokens, repository settings, and copying `templates/repo` into each repository). It never writes into your repositories. It never creates accounts and never touches a token.
 
 ## 8. Out of scope for v0.1
 
 Hosting the AI sessions, a web dashboard, billing, a hosted secrets service. The kit says where each belongs and leaves the choice to the owner.
 
-## 9. Open questions for the owner
+## 9. Later
 
-1. License (decided by the owner, 2026-10-31): CC BY 4.0, the same as Build@Scale with AI. Attribution to keep: "Build@Scale with AI by Siva Kannathasan" (this kit: "Build@Scale AI Dev Team, part of Build@Scale with AI by Siva Kannathasan"). The full legal text is in LICENSE. Note: the sibling's README says CC BY 4.0 but the sibling repository has no LICENSE file, so GitHub shows no license for it; adding the file there is a small follow-up.
-2. Home organization and visibility of the repository.
-3. Whether `/scaffold` in Build@Scale should offer to onboard an AI team (a small change in that repository).
+- Whether the Build@Scale `/scaffold` command should offer to onboard an AI team (a small change in that repository).
+- A GitHub App recipe per role, so every AI gets its own short-lived token.
 
-## 10. Two ways to use it: solo and team (v0.2 plan)
+## 10. Two ways to use it: solo and team
 
 The kit serves one person on their own and a team of people, from the same files. The mode is one line in the config (`mode: solo` or `mode: team`); nothing else forks.
 
@@ -130,7 +129,7 @@ Rules that hold in both modes:
 - Growing from solo to team changes the config and adds people; no file is rewritten.
 - `doctor` checks that each project names exactly one owner and one lead, and that guardrails work without a person watching.
 
-### Policy, people and AI workers (implemented in v0.2)
+### Policy, people and AI workers
 
 Config fields, all optional so a v0.1 config still loads:
 - `mode`: `solo` or `team` (default `team`).
@@ -139,7 +138,7 @@ Config fields, all optional so a v0.1 config still loads:
 
 `tools/doctor.mjs --config <file> [--repo <folder>] [--me <handle>]` checks that the policy is consistent (one lead per project, the lead is an AI account and not a person, a merge watch is only set where merging is allowed, one identity per AI worker, solo means one owner and no members), that a repository carries the template, the baseline checks and CODEOWNERS, and prints the projects a person owns or belongs to with their role and merge power.
 
-### Required functions: no shortcuts (v0.2)
+### Required functions: no shortcuts
 
 Build@Scale has no shortcuts, so every project must cover four functions, and `doctor` fails the setup when one is missing:
 

@@ -41,6 +41,9 @@ export function checkPolicy(config) {
   const errors = [];
   const warnings = [];
   const aiAccounts = new Set([...config.ai_accounts, ...config.roles.map((r) => r.account).filter(Boolean)].map(lower));
+  // Every AI identity named anywhere, including worker accounts listed under people (used to keep humans and AIs apart).
+  const anyAi = new Set([...aiAccounts, ...Object.values(config.people).flatMap((x) => x.roles.map((w) => w.account).filter(Boolean)).map(lower)]);
+  const personHandles = new Set([...config.owner.handles, ...Object.keys(config.people)].map(lower));
   for (const [id, p] of Object.entries(config.projects)) {
     const at = `projects.${id}`;
     if (config.mode === "solo") {
@@ -48,22 +51,35 @@ export function checkPolicy(config) {
       if (p.members.length) errors.push(`${at}: solo mode has no members; switch to mode "team" to add people`);
     } else if (!p.lead) errors.push(`${at}: team mode needs one lead AI account (set "lead")`);
     if (p.lead && !aiAccounts.has(lower(p.lead))) errors.push(`${at}.lead "${p.lead}" is not one of the organization's AI accounts`);
-    if (p.lead && [...p.owners, ...p.members].some((h) => lower(h) === lower(p.lead))) errors.push(`${at}.lead "${p.lead}" is also listed as a person; the lead must be an AI account`);
+    if (p.lead && ([...p.owners, ...p.members].some((h) => lower(h) === lower(p.lead)) || personHandles.has(lower(p.lead)))) errors.push(`${at}.lead "${p.lead}" is also listed as a person; the lead must be an AI account`);
+    // A person (owner, member or a covering person:) must never be an AI account: an AI cannot be the human who decides.
+    for (const h of [...p.owners, ...p.members]) if (anyAi.has(lower(h))) errors.push(`${at}: "${h}" is an AI account but is listed as an owner or member; owners and members must be people`);
     if (p.watch === "merge" && p.merge === "owner-only") errors.push(`${at}: watch is "merge" but merge is "owner-only", so the watch would never be allowed to merge (set merge to lead-after-conditions or lead-on-owner-word)`);
     if (p.merge !== "owner-only" && !p.lead) errors.push(`${at}: merge is "${p.merge}" but no lead AI account is named`);
     if (p.merge === "lead-after-conditions" && p.testing === "later") warnings.push(`${at}: the lead merges on conditions but QA testing is "later"; consider "active"`);
   }
   // Every function must be covered in every project, by a role somebody runs or a named person. A check alone never covers one.
   const runRoles = new Set([...config.roles.map((r) => r.name), ...Object.values(config.people).flatMap((x) => x.roles.map((w) => w.name))]);
+  const hasPeople = Object.keys(config.people).length > 0;
   for (const [id, p] of Object.entries(config.projects)) {
     const at = `projects.${id}.covers`;
     const people = new Set([...p.owners, ...p.members].map(lower));
+    // Roles somebody in this project runs. With a "people" section: each owner or member brings their own workers; an owner without an entry
+    // uses the organization-level roles. Without "people": every role of the organization counts.
+    const projectRoles = new Set();
+    for (const h of [...p.owners, ...p.members]) {
+      const key = Object.keys(config.people).find((k) => lower(k) === lower(h));
+      if (key) config.people[key].roles.forEach((w) => projectRoles.add(w.name));
+      else if (p.owners.some((o) => lower(o) === lower(h))) config.roles.forEach((r) => projectRoles.add(r.name));
+    }
     for (const fn of FUNCTIONS) {
       const v = p.covers[fn];
       if (!v) { errors.push(`${at}.${fn} is missing: every project must say who covers ${fn} (role:<role> or person:<handle>)`); continue; }
       const [kind, who] = v.split(":");
       if (kind === "role" && !ROLE_FOR[fn].includes(who)) errors.push(`${at}.${fn}: role "${who}" does not do ${fn} (use one of ${ROLE_FOR[fn].join(", ")}, or a person)`);
       else if (kind === "role" && !runRoles.has(who)) errors.push(`${at}.${fn}: nobody runs the role "${who}"; add it to roles or people, or name a person`);
+      else if (kind === "role" && hasPeople && !projectRoles.has(who)) errors.push(`${at}.${fn}: nobody in this project runs ${who}; an owner or member must run it (people), or name a person`);
+      if (kind === "person" && anyAi.has(lower(who))) errors.push(`${at}.${fn}: "${who}" is an AI account; person: must name a human`);
       if (kind === "person" && !people.has(lower(who))) errors.push(`${at}.${fn}: "${who}" is not an owner or member of this project`);
     }
     const d = p.covers.decision;

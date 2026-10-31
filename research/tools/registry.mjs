@@ -16,9 +16,11 @@ export function emptyRegistry() {
   return { note: "Every test run or planned. Edit with research/tools/registry.mjs.", tests: [] };
 }
 
+// Reading never creates anything: a missing file is an error. Only `add` starts a new registry (see main).
 export function loadRegistry(file) {
-  if (!fs.existsSync(file)) return emptyRegistry();
-  const reg = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (!fs.existsSync(file)) throw new Error(`file not found: ${file}`);
+  let reg;
+  try { reg = JSON.parse(fs.readFileSync(file, "utf8")); } catch (err) { throw new Error(`${file}: not valid JSON (${err.message})`); }
   if (!reg || !Array.isArray(reg.tests)) throw new Error(`${file}: not a registry (no "tests" array)`);
   return reg;
 }
@@ -97,9 +99,11 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a.startsWith("--")) {
       const k = a.slice(2);
+      if (k !== "file" && !FIELDS.includes(k)) throw new Error(`unknown flag: --${k}`);
       const next = argv[i + 1];
-      if (next === undefined || next.startsWith("--")) opt[k] = "";
-      else { opt[k] = next; i++; }
+      if (next === undefined || next.startsWith("--")) throw new Error(`flag --${k} needs a value (a value cannot start with --)`);
+      opt[k] = next;
+      i++;
     } else pos.push(a);
   }
   return { pos, opt };
@@ -111,8 +115,9 @@ export function main(argv, out = console.log) {
   const { pos, opt } = parseArgs(argv);
   const [cmd, ...rest] = pos;
   if (!cmd || !opt.file) throw new Error("usage: registry.mjs <list|find|add|set> ... --file <registry.json>");
-  const reg = loadRegistry(opt.file);
+  if (!["list", "find", "add", "set"].includes(cmd)) throw new Error(`unknown command: ${cmd}`);
   const { file, ...fields } = opt;
+  const reg = cmd === "add" && !fs.existsSync(file) ? emptyRegistry() : loadRegistry(file);
   if (cmd === "list") {
     listTests(reg, { status: fields.status }).forEach((t) => out(line(t)));
   } else if (cmd === "find") {

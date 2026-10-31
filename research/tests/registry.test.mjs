@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { emptyRegistry, addTest, setField, findTests, listTests, loadRegistry, main } from "../tools/registry.mjs";
+import { spawnSync } from "node:child_process";
+import { emptyRegistry, addTest, setField, findTests, listTests, loadRegistry, saveRegistry, main } from "../tools/registry.mjs";
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "reg-"));
 
@@ -73,4 +74,49 @@ test("cli: add, set, find and list work on a file and persist", () => {
   out.length = 0;
   run("list", "--status", "judged");
   assert.equal(out.length, 1);
+});
+
+test("read commands on a missing file fail with 'file not found' and create nothing", () => {
+  const file = path.join(tmp(), "missing.json");
+  for (const cmd of [["list"], ["find", "x"], ["set", "R-1", "--status", "measured"]]) {
+    assert.throws(() => main([...cmd, "--file", file], () => {}), /file not found: /);
+  }
+  assert.ok(!fs.existsSync(file));
+  main(["add", "--id", "R-1", "--idea", "x", "--file", file], () => {});
+  assert.ok(fs.existsSync(file));
+});
+
+test("cli exits 1 with 'file not found' for list on a missing file", () => {
+  const file = path.join(tmp(), "missing.json");
+  const r = spawnSync(process.execPath, [path.resolve("research/tools/registry.mjs"), "list", "--file", file], { encoding: "utf8" });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /file not found/);
+});
+
+test("unknown flags and flag values starting with -- are rejected", () => {
+  const file = path.join(tmp(), "r.json");
+  assert.throws(() => main(["add", "--id", "R-1", "--idea", "x", "--colour", "red", "--file", file], () => {}), /unknown flag: --colour/);
+  assert.throws(() => main(["add", "--id", "R-1", "--idea", "--cost", "1", "--file", file], () => {}), /--idea needs a value/);
+  assert.ok(!fs.existsSync(file));
+});
+
+test("save is atomic: no temp file is left and a failed write keeps the old file", () => {
+  const d = tmp();
+  const file = path.join(d, "r.json");
+  const reg = emptyRegistry();
+  addTest(reg, { id: "R-1", idea: "x" });
+  saveRegistry(file, reg);
+  assert.deepEqual(fs.readdirSync(d), ["r.json"]);
+  const before = fs.readFileSync(file, "utf8");
+  const circular = {};
+  circular.self = circular;
+  assert.throws(() => saveRegistry(file, circular));
+  assert.equal(fs.readFileSync(file, "utf8"), before);
+  assert.deepEqual(fs.readdirSync(d), ["r.json"]);
+});
+
+test("malformed JSON gives a clear error", () => {
+  const file = path.join(tmp(), "r.json");
+  fs.writeFileSync(file, "{ not json");
+  assert.throws(() => loadRegistry(file), /not valid JSON/);
 });

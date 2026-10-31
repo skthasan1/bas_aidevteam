@@ -6,7 +6,7 @@ Mark each PASS, FAIL or N/A in the report.
 
 | # | Check | How |
 |---|---|---|
-| P1 | No secret in the report, findings, notes, screenshots, commands or messages (password, token, key, cookie, another person's data) | Search your own outputs before saving: `grep -nEi "(key|token|secret|password|bearer)\s*[:=]"`. Blur screenshots |
+| P1 | No secret in the report, findings, notes, screenshots, commands or messages (password, token, key, cookie, another person's data) | Search your own outputs before saving: `grep -nEi "(key|token|secret|password|bearer)\[[:space:]]*[:=]"`. Blur screenshots |
 | P2 | You did not open `.env*` files, private-key files, credential files or key folders | Say so in the report |
 | P3 | If you meet a secret by accident (in code, a response, a log): report the **file name and the kind of secret only**, to the tech lead, privately. Never paste the value. The owner rotates it | Message the tech lead; do not put it in a finding |
 | P4 | A possible **security** problem is not written in the findings sheet or in a shared report. Set `security_flag` to `yes`, write nothing else in the row, and tell the tech lead privately with what you saw. The tech lead passes it to the security and compliance lead and the owner | See "Security hand-off" below |

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { createGh } from "../tools/lib/gh.mjs";
-import { prWatch, formatPrWatch } from "../tools/pr-watch.mjs";
+import { prWatch, formatPrWatch, checksOf, isBotAuthor } from "../tools/pr-watch.mjs";
 import { questionWatch, isCandidate } from "../tools/question-watch.mjs";
 import { mergeWatch, formatMergeWatch } from "../tools/merge-watch.mjs";
 import { makeConfig, fakeRunner, tmpDir } from "./helpers.mjs";
@@ -133,4 +133,53 @@ test("merge-watch lists recent merges, flags QA pending and new conflicts", () =
   assert.equal(r.conflicts.length, 0);
 
   for (const c of runner.calls) assert.deepEqual(c.args.slice(0, 2), ["pr", "list"]);
+});
+
+test("pr-watch bot skip is an exact match, not a substring", () => {
+  const names = new Set(["dependabot", "renovate", "ci-helper"]);
+  assert.equal(isBotAuthor({ login: "dependabot[bot]" }, names), true);
+  assert.equal(isBotAuthor({ login: "app/dependabot" }, names), true);
+  assert.equal(isBotAuthor({ login: "ci-helper" }, names), true);
+  assert.equal(isBotAuthor({ login: "someone", is_bot: true }, names), true);
+  assert.equal(isBotAuthor({ login: "dependabotfan" }, names), false);
+  assert.equal(isBotAuthor({ login: "renovate-fan-club" }, names), false);
+  assert.equal(isBotAuthor({ login: "my-dependabot" }, names), false);
+  const config = makeConfig();
+  const r = prWatch({ config, gh: createGh({ runner: fakeRunner(() => JSON.stringify([pr(1, "a", { author: { login: "dependabotfan" } })])) }), stateDir: tmpDir() });
+  assert.equal(r.fresh.length, 2, "a person whose name contains a bot name is still reviewed");
+  assert.equal(r.other.length, 0);
+});
+
+test("checks: every failing conclusion is red, skipped is neutral, status contexts use state", () => {
+  const c = (...x) => checksOf({ statusCheckRollup: x });
+  for (const k of ["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED"]) assert.equal(c({ conclusion: "SUCCESS" }, { conclusion: k }), "RED", k);
+  assert.equal(c({ conclusion: "SUCCESS" }, { conclusion: "SKIPPED" }, { conclusion: "NEUTRAL" }), "green");
+  assert.equal(c({ conclusion: "SUCCESS" }, { conclusion: "", status: "IN_PROGRESS" }), "pending");
+  assert.equal(c({ state: "FAILURE" }), "RED");
+  assert.equal(c({ state: "ERROR" }), "RED");
+  assert.equal(c({ state: "PENDING" }), "pending");
+  assert.equal(c({ state: "SUCCESS" }, { conclusion: "SUCCESS" }), "green");
+  assert.equal(checksOf({ statusCheckRollup: [] }), "none");
+});
+
+test("pr-watch shows a draft again when it is marked ready with the same head", () => {
+  const dir = tmpDir();
+  const config = makeConfig();
+  let prs = [pr(1, "aaa", { isDraft: true })];
+  const gh = createGh({ runner: fakeRunner(() => JSON.stringify(prs)) });
+  assert.ok(prWatch({ config, gh, stateDir: dir }).fresh.every((f) => f.state === "NEW"));
+  assert.equal(prWatch({ config, gh, stateDir: dir }).fresh.length, 0, "an unchanged draft stays quiet");
+  prs = [pr(1, "aaa", { isDraft: false })];
+  const ready = prWatch({ config, gh, stateDir: dir });
+  assert.equal(ready.fresh.length, 2);
+  assert.ok(ready.fresh.every((f) => f.state === "READY"));
+  assert.equal(prWatch({ config, gh, stateDir: dir }).fresh.length, 0, "and once ready it is seen");
+});
+
+test("question-watch skips role accounts, worker accounts and project leads, and comments created before since", () => {
+  const config = makeConfig((r) => ({ ...r, roles: [{ name: "tech-lead", account: "acme-tl-bot" }], people: { "dana-owner": { roles: [{ name: "ai-developer", account: "dana-dev-bot" }] } }, projects: { ...r.projects, notes: { ...r.projects.notes, lead: "acme-lead-bot" } } }));
+  const c = (login, created_at = "2026-01-02T10:00:00Z") => ({ user: { login, type: "User" }, body: "hello?", created_at, html_url: `https://example.test/c/${login}` });
+  const gh = createGh({ runner: fakeRunner(() => JSON.stringify([c("outsider"), c("acme-tl-bot"), c("dana-dev-bot"), c("acme-lead-bot"), c("old-timer", "2025-06-01T00:00:00Z")])) });
+  const r = questionWatch({ config, projectId: "notes", gh, stateDir: tmpDir(), now: new Date("2026-01-03T00:00:00Z"), save: false });
+  assert.deepEqual([...new Set(r.candidates.map((x) => x.author))], ["outsider"]);
 });

@@ -14,12 +14,14 @@ Rules:
 
 - One identity per role. Two AI developers working for two humans get two identities.
 - The identity's name says what it is, for example `acme-qa-bot`.
-- Every comment an AI posts starts with the signature `Reviewed by <role> (<owner>'s AI assistant)`, so the responsible human is clear even if two bots look alike.
+- Every comment an AI posts starts with the signature for its act (`Reviewed by`, `Raised by`, `Answered by` or `Tested by`) followed by `<role> (<owner>'s AI assistant)`, so the responsible human is clear even if two bots look alike.
 - A GitHub App is preferred over a bot user: its permissions are set per repository, its tokens expire in an hour, and it does not use a paid seat. A bot user is acceptable at the start.
-- Never run an AI session under a human's personal login for anything that changes GitHub. If you must for a short time, say so in the pull request body.
-- If you cannot yet give every AI its own identity, name the AI in the body of every issue or comment it writes, and plan to fix it. This is a stopgap.
+- Never run an AI session under a human's personal login for anything that changes GitHub. The only exception is a short, named one: the owner writes down which session, why, and the date it ends, and says so in the pull request body.
+- If you cannot yet give every AI its own identity, name the AI in the body of every issue or comment it writes, and set an end date for fixing it. `doctor` flags two workers that share one account.
 
 ## 2. Token handling
+
+- The kit's own tools are read-only toward GitHub: the wrapper in `tools/lib/gh.mjs` refuses anything that writes unless the caller passes `write: true`, and no watch does.
 
 A token is a password that can be used by a script. Treat it like one.
 
@@ -50,7 +52,7 @@ A token is a password that can be used by a script. Treat it like one.
 - In the owner's secret store or the environment of the session, set by the owner by hand.
 - Never pasted into a chat with an AI. Never written into a file in a repository, a brief, a note, a log or a pull request body. Never printed to the screen by a script.
 - The AI team is told: do not read, print, copy or ask for a key. If a step needs a key, tell the owner where it goes and let the owner put it there.
-- In CI, use repository secrets. They are used by workflows and are not shown in logs.
+- In CI, use repository secrets. They are used by workflows and are masked in logs. Masking is not a guarantee: never echo a secret in a workflow step.
 
 **Repository secrets versus personal tokens.**
 

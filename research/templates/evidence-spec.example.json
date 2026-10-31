@@ -17,18 +17,16 @@
       "tag": "T1", "title": "Exact on-screen text", "cost": "6 pictures, $0.30",
       "text": "Variant A: a sign described vaguely. Variant B: the exact text in quotes plus the sign's reference picture.",
       "question": "Is the sign's text right?",
-      "layout": "pair",
       "items": [
-        { "kind": "image", "path": "media/T1-1-A.png", "caption": "A: vague wording" },
-        { "kind": "image", "path": "media/T1-1-B.png", "caption": "B: exact text and reference" }
+        { "kind": "image", "path": "media/t1-1.png", "caption": "A: vague wording" },
+        { "kind": "image", "path": "media/t1-2.png", "caption": "B: exact text and reference" }
       ]
     },
     {
       "tag": "T2", "title": "Cuts inside one clip", "cost": "4 clips, $1.80",
-      "layout": "pair",
       "items": [
-        { "kind": "video", "path": "media/T2-1-A.mp4", "caption": "A: single shot" },
-        { "kind": "video", "path": "media/T2-1-B.mp4", "caption": "B: hard cuts" }
+        { "kind": "video", "path": "media/t2-1.mp4", "caption": "A: single shot" },
+        { "kind": "video", "path": "media/t2-2.mp4", "caption": "B: hard cuts" }
       ]
     }
   ],

@@ -4,6 +4,10 @@ Purpose: the one format for every test report. Copy this file to `reports/<produ
 
 Written for: the tech lead and the owner. Tester: the QA lead (an AI session).
 
+This is the long form of the evidence block in `docs/PROTOCOL.md` section 6 (tested head, environment, scenarios with PASS / FAIL / NOT RUN, findings, limitations, gaps). The tech lead posts the section 6 block on the pull request or issue and links this report from it. A gap is never counted as a pass.
+
+First line of every report: `Tested by QA lead (<owner>'s AI assistant)`
+
 ## 1. What was tested
 
 - **Tested head (full commit id):** `<40 characters>`
@@ -21,7 +25,7 @@ Written for: the tech lead and the owner. Tester: the QA lead (an AI session).
 
 ## 3. Facts: what happened
 
-| Scenario or check | Result | Number or observation | Finding row | New or known | Evidence |
+| Scenario or check | Result (PASS / FAIL / NOT RUN) | Number or observation | Finding row | New or known | Evidence |
 |---|---|---|---|---|---|
 
 Failed and blocked items first. Give the measured number wherever there is one (pixels, seconds, ratio, status code).

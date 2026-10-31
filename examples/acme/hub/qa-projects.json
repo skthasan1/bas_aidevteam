@@ -20,6 +20,10 @@
       "account": "acme-qa-bot"
     },
     {
+      "name": "security-lead",
+      "account": "acme-security-bot"
+    },
+    {
       "name": "researcher",
       "account": "acme-research-bot"
     }
@@ -36,7 +40,16 @@
         "dana-owner"
       ],
       "testing": "active",
-      "watch": "review"
+      "watch": "review",
+      "lead": "acme-techlead-bot",
+      "merge": "lead-on-owner-word",
+      "covers": {
+        "review": "role:tech-lead",
+        "test": "role:qa-lead",
+        "security": "role:security-lead",
+        "decision": "person:dana-owner"
+      },
+      "members": []
     },
     "tasks": {
       "name": "Acme Tasks",
@@ -45,11 +58,64 @@
         "tasks": "acme/tasks"
       },
       "owners": [
-        "dana-owner",
-        "sam-dev"
+        "dana-owner"
       ],
       "testing": "later",
-      "watch": "off"
+      "watch": "off",
+      "lead": "acme-techlead-bot",
+      "merge": "owner-only",
+      "members": [
+        "sam-dev"
+      ],
+      "covers": {
+        "review": "role:tech-lead",
+        "test": "person:dana-owner",
+        "security": "role:security-lead",
+        "decision": "person:dana-owner"
+      }
+    }
+  },
+  "mode": "team",
+  "people": {
+    "dana-owner": {
+      "roles": [
+        {
+          "name": "tech-lead",
+          "account": ""
+        },
+        {
+          "name": "qa-lead",
+          "account": ""
+        },
+        {
+          "name": "researcher",
+          "account": ""
+        },
+        {
+          "name": "ai-developer",
+          "account": "acme-dev-bot"
+        },
+        {
+          "name": "security-lead",
+          "account": "acme-security-bot"
+        }
+      ]
+    },
+    "sam-dev": {
+      "roles": [
+        {
+          "name": "ai-developer",
+          "account": "sam-dev-bot-1"
+        },
+        {
+          "name": "ai-developer",
+          "account": "sam-dev-bot-2"
+        },
+        {
+          "name": "ai-developer",
+          "account": "sam-dev-bot-3"
+        }
+      ]
     }
   },
   "bots": [
@@ -65,6 +131,10 @@
     "acme-techlead-bot",
     "acme-dev-bot",
     "acme-qa-bot",
-    "acme-research-bot"
+    "acme-research-bot",
+    "sam-dev-bot-1",
+    "sam-dev-bot-2",
+    "sam-dev-bot-3",
+    "acme-security-bot"
   ]
 }

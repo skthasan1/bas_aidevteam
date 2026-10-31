@@ -7,6 +7,7 @@ Purpose: the steps only a person can do. The onboarding tool never creates accou
 - [ ] Create a separate GitHub account (or GitHub App) for the tech-lead role (planned name: acme-techlead-bot). One identity per AI; never share a login.
 - [ ] Create a separate GitHub account (or GitHub App) for the ai-developer role (planned name: acme-dev-bot). One identity per AI; never share a login.
 - [ ] Create a separate GitHub account (or GitHub App) for the qa-lead role (planned name: acme-qa-bot). One identity per AI; never share a login.
+- [ ] Create a separate GitHub account (or GitHub App) for the security-lead role (planned name: acme-security-bot). One identity per AI; never share a login.
 - [ ] Create a separate GitHub account (or GitHub App) for the researcher role (planned name: acme-research-bot). One identity per AI; never share a login.
 - [ ] Add each account to the organization with the least access that works (read for most repos, write only where the role pushes branches).
 
@@ -30,7 +31,7 @@ Purpose: the steps only a person can do. The onboarding tool never creates accou
 ## 4. Projects
 
 - [ ] Acme Notes (notes): confirm owners (dana-owner), testing status (active) and watch mode (review).
-- [ ] Acme Tasks (tasks): confirm owners (dana-owner, sam-dev), testing status (later) and watch mode (off).
+- [ ] Acme Tasks (tasks): confirm owners (dana-owner), testing status (later) and watch mode (off).
 
 ## 5. First run
 

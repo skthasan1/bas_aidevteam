@@ -3,7 +3,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 export function readState(dir, name, fallback = {}) {
-  try { return JSON.parse(fs.readFileSync(path.join(dir, `${name}.json`), "utf8")); } catch { return fallback; }
+  try {
+    const v = JSON.parse(fs.readFileSync(path.join(dir, `${name}.json`), "utf8"));
+    // Only a plain object is valid state: null, an array or a number (a corrupt or hand-edited file) falls back.
+    return v !== null && typeof v === "object" && !Array.isArray(v) ? v : fallback;
+  } catch { return fallback; }
 }
 
 export function writeState(dir, name, value) {

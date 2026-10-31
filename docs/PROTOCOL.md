@@ -141,7 +141,7 @@ Not every change needs the same attention. Tiers set the minimum review. The rep
 | T0 | Documentation, comments, formatting with no code change | One clearance from a reviewer role. |
 | T1 | Ordinary code with tests, no item from T2 or T3 | One clearance from a reviewer role, CI green, tests for the new behaviour. |
 | T2 | Anything touching money, prompts, data shape, dependencies, deployment or CI | One clearance and a named person's own read of the exact current head. |
-| T3 | Authentication, authorisation, secrets handling, security configuration, production releases, deleting data, access for people | A named person's own read of the exact current head, plus a clearance from the security role. AIs may prepare and review; they do not approve alone. |
+| T3 | Authentication, authorisation, secrets handling, security configuration, production releases, deleting data, access for people | A named person's own read of the exact current head, plus a clearance from whoever covers the `security` function (a security role or a named person). AIs may prepare and review; they do not approve alone. |
 
 ### 5.1 What always needs a named person's own read of the exact current head
 
@@ -303,12 +303,12 @@ Rules:
 
 ## 10. Deadlines for waiting decisions (optional)
 
-When a decision is waiting on a person and holds others up, an owner can set a deadline rule for a project. It is optional and off by default. Write it once, in the repository's contributing file or the hub runbook:
+When a decision is waiting on a person and holds others up, an owner can set a deadline rule for a project. It is an advanced option, off by default, and it never replaces the required `decision` function (the person stays the decider). Write it once, in the repository's contributing file or the hub runbook:
 
 ```
 Decision deadline rule (project <name>):
 - The named person decides within <12> hours of the request.
-- After that time with no answer, the tech lead's AI assistant decides or approves into the integration branch, records the decision in the decision log, and the person reviews it later. A change the person wants is then made.
+- After that time with no answer, the tech lead's AI assistant may merge a low-risk change (T0 or T1 only) into the non-production integration branch, records it in the decision log, and the person reviews it later. A change the person wants is then made. Decisions on spend, releases and access are never covered: they wait for the person.
 - Not covered, always the person's own word: production, hosting and real money, connecting real accounts, access and people, deleting data, a failing check, any open security finding.
 - The person's own answer always wins, even after a deadline decision.
 ```

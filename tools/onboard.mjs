@@ -6,6 +6,11 @@
 // one start-up brief per enabled role (briefs/<role>-startup.md, from roles/<role>.md with placeholders filled) and ONBOARDING-TODO.md,
 // the list of steps only a person can do. It never creates accounts, never reads or writes a token and never changes repository settings.
 // Placeholders filled in templates and role files: {{org}} {{owner_name}} {{owner_handles}} {{role}} {{role_account}} {{projects}} {{repos}}
+// and the angle-bracket ones the kit text uses: <org>, <owner> (the owner's name), <hub-path> (the --target path as given), <repo-list>,
+// and <role> (start-up briefs only: in the hub layouts <role> is for whoever fills the layout in). Anything the tool cannot know
+// (<date>, <reason>, <topic>, <amount>, <worktree-path> ...) is left as it is for a person or session to fill.
+// Safety: it refuses a path that resolves (through a symlink) outside the target, JSON-escapes values put into .json files,
+// and with --force keeps qa-projects.json.bak when it overwrites an existing qa-projects.json. Yes/no flags accept only true or false.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -26,8 +31,21 @@ function walk(dir, base = dir) {
   return out.sort();
 }
 
-export function fill(text, vars) {
-  return text.replace(/\{\{\s*([a-z_]+)\s*\}\}/g, (m, k) => (k in vars ? vars[k] : m));
+const jsonEscape = (v) => JSON.stringify(String(v)).slice(1, -1);
+
+// Fills {{name}} from vars and <name> for the known non-empty entries of `angle`. Unknown placeholders stay as they are.
+// With json: true the inserted values are JSON-escaped (for text that sits inside a JSON string).
+export function fill(text, vars, { angle = {}, json = false } = {}) {
+  const esc = json ? jsonEscape : String;
+  return text
+    .replace(/\{\{\s*([a-z_]+)\s*\}\}/g, (m, k) => (k in vars ? esc(vars[k]) : m))
+    .replace(/<([a-z][a-z-]*)>/g, (m, k) => (Object.hasOwn(angle, k) && angle[k] ? esc(angle[k]) : m));
+}
+
+// The angle-bracket placeholders onboard knows. <role> is only known for a role's own brief.
+export function angleFor(config, role, hubPath) {
+  const repos = [...new Set(Object.values(config.projects).flatMap(reposOf))];
+  return { org: config.organization, owner: config.owner.name, "hub-path": hubPath, "repo-list": repos.join(", "), ...(role ? { role: role.name } : {}) };
 }
 
 function varsFor(config, role) {
@@ -70,18 +88,19 @@ export function todoText(config) {
 }
 
 // Builds the list of files to write: { rel, content, source }
-export function plan({ config, kitRoot = KIT_ROOT }) {
+export function plan({ config, kitRoot = KIT_ROOT, hubPath = "" }) {
   const files = [];
   const warnings = [];
   const tplDir = path.join(kitRoot, "templates", "hub");
   const rootVars = varsFor(config, null);
+  const rootAngle = angleFor(config, null, hubPath);
   const tpls = walk(tplDir);
   if (!tpls.length) warnings.push("templates/hub is empty or missing: nothing to copy");
   for (const rel of tpls) {
     if (rel === "qa-projects.json") continue;
     const raw = fs.readFileSync(path.join(tplDir, rel));
     const ext = path.extname(rel).toLowerCase();
-    const content = TEXT_EXT.has(ext) ? fill(raw.toString("utf8"), rootVars) : raw;
+    const content = TEXT_EXT.has(ext) ? fill(raw.toString("utf8"), rootVars, { angle: rootAngle, json: ext === ".json" }) : raw;
     files.push({ rel, content, source: `templates/hub/${rel}` });
   }
   const { ai_accounts, bots, ai_comment_prefixes, ...rest } = config;
@@ -89,7 +108,7 @@ export function plan({ config, kitRoot = KIT_ROOT }) {
   for (const role of config.roles) {
     const src = path.join(kitRoot, "roles", `${role.name}.md`);
     if (!fs.existsSync(src)) { warnings.push(`roles/${role.name}.md not found: no start-up brief for ${role.name}`); continue; }
-    files.push({ rel: `briefs/${role.name}-startup.md`, content: fill(fs.readFileSync(src, "utf8"), varsFor(config, role)), source: `roles/${role.name}.md` });
+    files.push({ rel: `briefs/${role.name}-startup.md`, content: fill(fs.readFileSync(src, "utf8"), varsFor(config, role), { angle: angleFor(config, role, hubPath) }), source: `roles/${role.name}.md` });
   }
   files.push({ rel: "ONBOARDING-TODO.md", content: todoText(config), source: "generated" });
   const dupes = files.map((f) => f.rel).filter((r, i, a) => a.indexOf(r) !== i);
@@ -97,14 +116,36 @@ export function plan({ config, kitRoot = KIT_ROOT }) {
   return { files, warnings };
 }
 
+const isLink = (p) => { try { return fs.lstatSync(p).isSymbolicLink(); } catch { return false; } };
+
+// realpath of a path that may not exist yet: resolve the nearest existing ancestor, then re-append the missing part.
+// A dangling symlink counts as existing, so the write cannot follow it.
+function realWithTail(p) {
+  let cur = p;
+  const tail = [];
+  for (;;) {
+    try { return path.join(fs.realpathSync(cur), ...tail.reverse()); } catch {
+      if (isLink(cur)) return path.join(path.resolve(path.dirname(cur), fs.readlinkSync(cur)), ...tail.reverse());
+      const up = path.dirname(cur);
+      if (up === cur) return p;
+      tail.push(path.basename(cur));
+      cur = up;
+    }
+  }
+}
+
 export function onboard({ config, target, apply = false, force = false, kitRoot = KIT_ROOT, log = console.log }) {
   if (!target) throw new Error("--target <hub folder> is required");
   const root = path.resolve(target);
-  const { files, warnings } = plan({ config, kitRoot });
+  const { files, warnings } = plan({ config, kitRoot, hubPath: target });
+  const realRoot = realWithTail(root);
   const rows = files.map((f) => {
     const dest = path.resolve(root, f.rel);
     if (dest !== root && !dest.startsWith(root + path.sep)) throw new Error(`refusing to write outside the target: ${f.rel}`);
-    return { ...f, dest, exists: fs.existsSync(dest) };
+    // A symlink inside the target must not lead the write somewhere else: resolve the real parent and the file itself.
+    const realDest = realWithTail(dest);
+    if (realDest !== realRoot && !realDest.startsWith(realRoot + path.sep)) throw new Error(`refusing to write outside the target (a symlink leads elsewhere): ${f.rel}`);
+    return { ...f, dest, exists: fs.existsSync(dest) || isLink(dest) };
   });
   log(`${apply ? "APPLY" : "DRY RUN"}: target ${root}`);
   for (const w of warnings) log(`warning: ${w}`);
@@ -118,6 +159,10 @@ export function onboard({ config, target, apply = false, force = false, kitRoot 
   const written = [];
   for (const r of rows) {
     fs.mkdirSync(path.dirname(r.dest), { recursive: true });
+    if (r.rel === "qa-projects.json" && fs.existsSync(r.dest)) {
+      fs.copyFileSync(r.dest, `${r.dest}.bak`);
+      log(`kept a copy of the old qa-projects.json as qa-projects.json.bak`);
+    }
     fs.writeFileSync(r.dest, r.content);
     written.push(r.rel);
   }
@@ -126,7 +171,12 @@ export function onboard({ config, target, apply = false, force = false, kitRoot 
 }
 
 async function main() {
-  const { flags } = parseArgs(process.argv.slice(2), ["apply", "force", "help"]);
+  let flags;
+  try {
+    const parsed = parseArgs(process.argv.slice(2), ["apply", "force", "help"]);
+    flags = parsed.flags;
+    if (parsed.positional.length) throw new Error(`unexpected argument "${parsed.positional[0]}" (yes/no flags take no value except true or false)`);
+  } catch (e) { console.error(e.message); process.exitCode = 2; return; }
   if (flags.help) {
     console.log(["Usage: node tools/onboard.mjs --config <file> --target <hub folder> [--apply] [--force]",
       "  --config  your organization config (default: qa-projects.json); start from examples/acme/qa-projects.json",

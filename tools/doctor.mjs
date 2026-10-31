@@ -24,7 +24,8 @@ export function doctor({ config, repo, me, log = console.log }) {
 }
 
 function main() {
-  const { flags } = parseArgs(process.argv.slice(2), ["help"]);
+  let flags;
+  try { ({ flags } = parseArgs(process.argv.slice(2), ["help"])); } catch (e) { console.error(e.message); process.exitCode = 2; return; }
   if (flags.help) {
     console.log(["Usage: node tools/doctor.mjs --config <file> [--repo <folder>] [--me <handle>]",
       "  --config  your organization config (default: qa-projects.json)",

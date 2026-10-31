@@ -16,7 +16,7 @@ Purpose: files a repository needs so people and AI teams can work together by th
 
 ## Steps
 
-1. Copy the files to the places in the table. Do it on a branch and open a pull request. The CI and CODEOWNERS files are T3 changes: a named person reads the exact head before merge.
+1. Copy the files to the places in the table. Do it on a branch and open a pull request. The CI file is a T2 change and CODEOWNERS is a T3 change (it decides who must approve): a named person reads the exact head before merge.
 2. In `CODEOWNERS`, replace every `<...>` with a real handle of a person or team that has write access. Remove paths you do not have.
 3. In `checks.yml`, read the comment block at the top. Pin every action by full commit hash (replace each `PIN-BY-HASH`), set the script names and Node version, and add a verified gitleaks install. Do not merge the file while any `PIN-BY-HASH` is left.
 4. Create the labels. With the GitHub command line, for each entry in `labels.json`: `gh label create "<name>" --color "<color>" --description "<description>" --force` (run it yourself; the kit never does it for you).
@@ -28,4 +28,4 @@ Purpose: files a repository needs so people and AI teams can work together by th
 - Do not put a real key, token, email address or hostname into any template.
 - Do not delete a section of the pull request template; write "none" or "not applicable, because ...".
 - The CI file never deploys and never reads a production secret.
-- License of the kit: to be set by the owner.
+- License of the kit: CC BY 4.0 (see the top-level README).

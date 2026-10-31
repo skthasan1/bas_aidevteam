@@ -54,8 +54,8 @@ export function formatMergeWatch(r) {
 }
 
 async function main() {
-  const { positional, flags } = parseArgs(process.argv.slice(2), ["dry-run", "no-save"]);
   try {
+    const { positional, flags } = parseArgs(process.argv.slice(2), ["dry-run", "no-save"]);
     const config = loadConfig(flags.config || "qa-projects.json");
     const gh = createGh({ dryRun: !!flags["dry-run"] });
     const hours = flags.hours ? Number(flags.hours) : 24;

@@ -20,14 +20,12 @@ You do not need any AI bot account to start reading and planning. You do need th
 2. Write your config from the example in `examples/`: organization name, repositories, people and the areas they own, and the roles to enable. Keep the config out of the kit folder.
 3. Run `tools/onboard.mjs` with your config. Without the apply option it is a dry run: it prints what it would create and changes nothing. Run it with the tool's help option to see its options.
 4. Read the output. Check the repository list, the people, the areas, the roles.
-5. Run it again with the apply option. It creates:
+5. Run it again with the apply option (flags are `--apply` and `--force`; a value other than true or false is an error; `--force` keeps the old config as `qa-projects.json.bak`). The angle-bracket placeholders it knows (`<org>`, `<owner>`, `<hub-path>`, `<repo-list>`) are filled in; the rest (such as `<date>` and `<reason>`) you fill when you use the file. It creates:
    - the hub folder (runbook, config, queue, briefings);
    - one start-up brief per enabled role;
-   - the repository files for you to copy: pull request template, issue templates, code owners, baseline CI workflow;
-   - the label sets to create;
-   - a checklist of steps only the owner can do.
+   - a checklist of steps only the owner can do, including copying the files in `templates/repo` (pull request template, issue templates, code owners, baseline CI workflow, label sets) into each repository yourself. The script does not touch your repositories.
 
-6. Run `tools/doctor.mjs --config <your config>`. It fails if a project has no lead AI, no named owner, or no one covering review, test, security and decision. Add `--repo <folder>` to check a repository carries the template, the baseline checks and CODEOWNERS, and `--me <your-handle>` to see which projects you own or belong to and what your AI workers may do in each.
+6. Run `tools/doctor.mjs --config <your config>`. It fails if (in team mode) a project has no lead AI, or if a project has no one covering review, test, security and decision. Add `--repo <folder>` to check a repository carries the template, the baseline checks and CODEOWNERS, and `--me <your-handle>` to see which projects you own or belong to and what your AI workers may do in each.
 
 Why dry run first: you see exactly what will be written and can fix a wrong config before any file exists.
 

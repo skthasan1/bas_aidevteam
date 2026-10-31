@@ -14,7 +14,7 @@ Files in this kit:
 |---|---|
 | `ROLE.md` | What the QA lead does, may do and must not do |
 | `test-strategy.md` | Scenarios, the full suite, the regression suite, how to run by risk |
-| `report-template.md` | The one report format used after every run |
+| `report-template.md` | The long form of the `docs/PROTOCOL.md` section 6 evidence block; the one report format used after every run |
 | `findings-template.csv` | The finding record, one row per problem |
 | `ui-standards-checklist.md` | A generic UI-standards list, with how to check each line |
 | `practice-checklist.md` | Secrets, evidence, security hand-off and other practice checks |
@@ -59,7 +59,7 @@ In the default set-up the QA lead has no GitHub write access. It has read access
 
 Why: one raising point keeps the issues clean (no duplicates, right repo, right priority) and keeps an attributable record of who asked for what. If an owner later grants the QA lead write access, that is the owner's decision and is written in the QA lead's `ROLE.md` in the team's own copy.
 
-If the QA lead shares a login with another AI, the issue author cannot tell them apart. Fix that by giving each AI its own account. Until then, every issue body names the reporter ("Reported by the QA lead").
+If the QA lead shares a login with another AI, the issue author cannot tell them apart. Fix that by giving each AI its own account. Until then, every issue body names the reporter ("Reported by the QA lead's AI assistant").
 
 ## A finding the tech lead can raise without questions
 
@@ -70,7 +70,9 @@ A finding is ready only when all of these fields are filled:
 | `project` | The product name, as the team calls it |
 | `repo` | The repo that owns the code, if you know. If not, write `unknown` and say why in `actual` |
 | `type` | `ui`, `ux`, `api`, `functionality`, `performance`, `usability` or `accessibility` |
-| `priority` | P0 blocks use or loses data or money. P1 a main flow is broken or very confusing. P2 a real problem with a workaround. P3 polish (small wording or visual) |
+| `priority` | Your recommendation, P0 to P3, as defined in `docs/PROTOCOL.md` section 8. The tech lead sets the final priority |
+| `severity` | `critical`, `high`, `medium`, `low` or `info`, as in `docs/PROTOCOL.md` section 8 |
+| `tier` | `T0` to `T3`, the review tier of the area affected (`docs/PROTOCOL.md` section 5). If unsure, write your best guess and say so in `actual` |
 | `title` | One line a developer understands without the sheet ("Save button does nothing on a phone-width screen") |
 | `steps` | Numbered, short, starting from a known state. Say which seeded data you used |
 | `expected` | What should happen, and where that comes from (a spec line, a design note, a rule id from the checklist) |
@@ -87,7 +89,7 @@ Why: the tech lead raises an issue by copying these fields. Any missing field co
 
 ## Labels the tech lead sets
 
-`tester-found`, a type label, and a priority label. The title is prefixed `[QA]`. The body ends with "Reported by the QA lead, raised by the tech lead". A finding raised twice is skipped (the issue carries a marker with the finding's title and head).
+`tester-found`, a type label, and a priority label. The title is prefixed `[QA]`. The body ends with the line required by `docs/PROTOCOL.md` section 8, for example "Reported by the QA lead's AI assistant, raised by the tech lead's AI assistant, from a test round". The evidence the tech lead posts uses the block in `docs/PROTOCOL.md` section 6. A finding raised twice is skipped (the issue carries a marker with the finding's title and head).
 
 ## Rules for the sheet
 

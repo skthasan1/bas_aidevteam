@@ -11,15 +11,26 @@ import { readState, writeState } from "./lib/state.mjs";
 
 const FIELDS = "number,title,author,baseRefName,isDraft,headRefOid,additions,deletions,url,statusCheckRollup";
 
-function checksOf(p) {
-  const c = (p.statusCheckRollup || []).map((x) => x.conclusion || x.status);
+const RED = new Set(["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE"]);
+const NEUTRAL = new Set(["SKIPPED", "NEUTRAL"]);
+
+// A check run has conclusion/status; a commit status context has "state". Anything not yet finished is "pending".
+export function checksOf(p) {
+  const c = (p.statusCheckRollup || []).map((x) => String(x.conclusion || x.status || x.state || "").toUpperCase());
   if (!c.length) return "none";
-  if (c.some((x) => x === "FAILURE")) return "RED";
-  return c.every((x) => x === "SUCCESS" || x === "NEUTRAL") ? "green" : "pending";
+  if (c.some((x) => RED.has(x))) return "RED";
+  return c.every((x) => x === "SUCCESS" || NEUTRAL.has(x)) ? "green" : "pending";
+}
+
+// Exact match only: "[bot]" account names, a configured bot login, or gh's own is_bot flag. Never a substring ("dependabotfan" is a person).
+export function isBotAuthor(author, names) {
+  const login = String(author?.login ?? "").toLowerCase();
+  if (!login) return false;
+  return author?.is_bot === true || login.endsWith("[bot]") || names.has(login) || names.has(login.replace(/^app\//, ""));
 }
 
 export function prWatch({ config, projectId, gh, stateDir = ".state", all = false, save = true }) {
-  const skipAuthors = (config.pr_watch?.skip_authors ?? ["dependabot", "renovate"]).map((s) => s.toLowerCase());
+  const skipAuthors = new Set([...(config.pr_watch?.skip_authors ?? ["dependabot", "renovate"]), ...(config.bots ?? [])].map((s) => s.toLowerCase()));
   const skipTitles = (config.pr_watch?.skip_titles ?? []).map((s) => new RegExp(s, "i"));
   const result = { fresh: [], other: [], errors: [], skipped: [] };
   for (const [id, project] of selectProjects(config, projectId)) {
@@ -33,11 +44,12 @@ export function prWatch({ config, projectId, gh, stateDir = ".state", all = fals
       catch (e) { result.errors.push(`${repo}: ${e.message}`); for (const k of Object.keys(seen)) if (k.startsWith(`${repo}#`)) next[k] = seen[k]; continue; }
       for (const p of list) {
         const key = `${repo}#${p.number}`;
-        next[key] = p.headRefOid;
+        // A draft is remembered as "draft:<sha>", not as seen: marking it ready with the same head shows it again (READY).
+        next[key] = p.isDraft ? `draft:${p.headRefOid}` : p.headRefOid;
         const author = p.author?.login ?? "?";
         const line = `${key} [${p.baseRefName}] ${author}${p.isDraft ? " DRAFT" : ""} +${p.additions}/-${p.deletions} checks:${checksOf(p)} :: ${String(p.title).slice(0, 90)}  ${p.url}`;
-        if (skipAuthors.some((a) => author.toLowerCase().includes(a)) || skipTitles.some((r) => r.test(p.title))) { result.other.push(line); continue; }
-        const state = !(key in seen) ? "NEW" : seen[key] !== p.headRefOid ? "CHANGED" : "seen";
+        if (isBotAuthor(p.author, skipAuthors) || skipTitles.some((r) => r.test(p.title))) { result.other.push(line); continue; }
+        const state = !(key in seen) ? "NEW" : seen[key] === next[key] ? "seen" : seen[key] === `draft:${p.headRefOid}` ? "READY" : "CHANGED";
         if (all || state !== "seen") result.fresh.push({ project: id, state, line });
       }
     }
@@ -56,8 +68,8 @@ export function formatPrWatch(r) {
 }
 
 async function main() {
-  const { positional, flags } = parseArgs(process.argv.slice(2), ["all", "dry-run", "no-save"]);
   try {
+    const { positional, flags } = parseArgs(process.argv.slice(2), ["all", "dry-run", "no-save"]);
     const config = loadConfig(flags.config || "qa-projects.json");
     const gh = createGh({ dryRun: !!flags["dry-run"] });
     const r = prWatch({ config, projectId: positional[0], gh, stateDir: flags["state-dir"] || ".state", all: !!flags.all, save: !flags["no-save"] });

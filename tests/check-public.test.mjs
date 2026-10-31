@@ -105,3 +105,70 @@ test("the example deny list ships with placeholders only and the real one is git
   assert.ok(ex.every((t) => /^Example|^example-/.test(t)));
   assert.match(fs.readFileSync(path.resolve(".gitignore"), "utf8"), /^tools\/public-denylist\.json$/m);
 });
+
+test("more token, key, path, URL and encoded-email patterns", () => {
+  const found = (text) => rules(text);
+  assert.ok(found("v " + "gho_" + "a1B2c3D4e5F6g7H8i9J0k1").includes("token"));
+  assert.ok(found("v " + "ghs_" + "a1B2c3D4e5F6g7H8i9J0k1").includes("token"));
+  assert.ok(found("v " + "ghu_" + "a1B2c3D4e5F6g7H8i9J0k1").includes("token"));
+  assert.ok(found("v " + "sk_" + "live_" + "abcdEFGH1234").includes("token"));
+  assert.ok(found("v " + "AI" + "za" + "A".repeat(35)).includes("token"));
+  assert.ok(found("-----BEGIN " + "PGP PRIVATE KEY BLOCK-----").includes("private-key"));
+  assert.deepEqual(found("path C:" + "/Us" + "ers/someone/project"), ["local-path"]);
+  assert.deepEqual(found("path /mn" + "t/c/Users/someone/x"), ["local-path"]);
+  assert.deepEqual(found("cd /ho" + "me/someone"), ["local-path"]);
+  assert.deepEqual(found("see https://github." + "com/acme/app/pull/12 now"), ["issue-ref"]);
+  assert.deepEqual(found("see https://github." + "com/acme/app/issues/7"), ["issue-ref"]);
+  assert.deepEqual(found("mail someone%40" + "company.org please"), ["email"]);
+  assert.deepEqual(found("mail dana%40example.com"), []);
+  // short or lookalike text is still fine
+  assert.deepEqual(found("gho_short and AIza-short and /home/<name> and sk_live_x"), []);
+});
+
+test("an underscore is a word boundary for deny-listed terms", () => {
+  assert.deepEqual(rules("Dana_Smith wrote it, also dana-smith and DANA_", { terms: ["Dana"] }), ["denylist"]);
+  assert.deepEqual(rules("Danaher", { terms: ["Dana"] }), []);
+});
+
+test("scanFolder: UTF-16 files are decoded, binaries and symlinks are skipped with a warning", (t) => {
+  const dir = tmpDir();
+  fs.writeFileSync(path.join(dir, "wide.txt"), Buffer.from("﻿" + "token " + ghp + "\n", "utf16le"));
+  fs.writeFileSync(path.join(dir, "pic.png"), Buffer.from([0, 1, 2]));
+  const outside = tmpDir();
+  fs.writeFileSync(path.join(outside, "x.md"), ghp);
+  let linked = true;
+  try { fs.symlinkSync(outside, path.join(dir, "link"), "junction"); } catch { linked = false; }
+  const warnings = [];
+  const found = scanFolder(dir, { warnings });
+  assert.deepEqual(found.map((f) => `${f.file}:${f.rule}`), ["wide.txt:token"]);
+  assert.ok(warnings.some((w) => /binary file skipped: pic\.png/.test(w)));
+  if (linked) assert.ok(warnings.some((w) => /symlink skipped: link/.test(w)));
+  else t.diagnostic("symlink part skipped");
+});
+
+test("scanFolder: only the given deny list file is skipped, and .private/.state/.watch only at the root", () => {
+  const dir = tmpDir();
+  fs.mkdirSync(path.join(dir, "tools")); fs.mkdirSync(path.join(dir, ".private")); fs.mkdirSync(path.join(dir, "sub", ".private"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "tools", "public-denylist.json"), "Dana is listed here\n");
+  fs.writeFileSync(path.join(dir, "tools", "public-denylist-notes.md"), "Dana again\n");
+  fs.writeFileSync(path.join(dir, ".private", "a.md"), "Dana\n");
+  fs.writeFileSync(path.join(dir, "sub", ".private", "b.md"), "Dana\n");
+  const key = (f) => `${f.file}`;
+  const own = path.join(dir, "tools", "public-denylist.json");
+  assert.deepEqual(scanFolder(dir, { terms: ["Dana"], skipFile: own }).map(key).sort(), ["sub/.private/b.md", "tools/public-denylist-notes.md"]);
+  assert.deepEqual(scanFolder(dir, { terms: ["Dana"] }).map(key).sort(), ["sub/.private/b.md", "tools/public-denylist-notes.md", "tools/public-denylist.json"]);
+});
+
+test("with only the example deny list the command warns and fails unless --allow-example", () => {
+  // run a copy of the tool in a folder that has just the example list, so a real tools/public-denylist.json cannot interfere
+  const kit = tmpDir();
+  fs.mkdirSync(path.join(kit, "tools", "lib"), { recursive: true });
+  for (const f of ["check-public.mjs", "public-denylist.example.json", "lib/cli.mjs"]) fs.copyFileSync(path.resolve("tools", f), path.join(kit, "tools", f));
+  const clean = path.join(kit, "scan"); fs.mkdirSync(clean);
+  fs.writeFileSync(path.join(clean, "a.md"), "nothing here\n");
+  const run = (...a) => spawnSync(process.execPath, [path.join(kit, "tools", "check-public.mjs"), clean, ...a], { encoding: "utf8" });
+  const refused = run();
+  assert.notEqual(refused.status, 0);
+  assert.match(refused.stderr, /only the example deny list/);
+  assert.equal(run("--allow-example").status, 0);
+});

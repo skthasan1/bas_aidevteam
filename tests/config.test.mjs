@@ -67,3 +67,11 @@ test("the acme example config is valid", () => {
   const c = loadConfig(new URL("../examples/acme/qa-projects.json", import.meta.url));
   assert.deepEqual(c.roles.map((r) => r.name), ["tech-lead", "ai-developer", "qa-lead", "security-lead", "researcher"]);
 });
+
+test("pr_watch and merge_watch regular expressions are validated with a clear error", () => {
+  const bad = (patch) => validateConfig(patch(baseRaw())).errors.join("\n");
+  assert.match(bad((r) => ({ ...r, pr_watch: { skip_titles: ["ok", "(unclosed"] } })), /skip_titles: "\(unclosed" is not a valid regular expression/);
+  assert.match(bad((r) => ({ ...r, pr_watch: { skip_titles: "wip" } })), /skip_titles must be an array/);
+  assert.match(bad((r) => ({ ...r, merge_watch: { qa_pending_pattern: "[" } })), /qa_pending_pattern "\[" is not a valid regular expression/);
+  assert.equal(bad((r) => ({ ...r, pr_watch: { skip_titles: ["^wip"] }, merge_watch: { qa_pending_pattern: "QA: *pending" } })), "");
+});

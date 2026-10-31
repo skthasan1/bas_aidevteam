@@ -81,6 +81,8 @@ After a merge, update the running instance that shows the change: pull, apply lo
 
 ## 6. The scheduled watches
 
+Two project fields decide what a watch may do. `watch` (`merge`, `review` or `off`) is what the tech lead's watch is asked to do for the repositories of a project. `merge` (`owner-only`, `lead-after-conditions` or `lead-on-owner-word`) is who is allowed to merge there. `watch: merge` is only valid where `merge` is not `owner-only`; `doctor` reports the clash.
+
 | Tool | Reads | Purpose |
 |---|---|---|
 | `tools/pr-watch.mjs` | Pull requests in the configured repositories | Lists pull requests that are new or changed since the last run. Bot-generated dependency pull requests are listed apart |

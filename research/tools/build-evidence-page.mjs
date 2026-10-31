@@ -13,7 +13,7 @@ export const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&am
 export const md = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
 
 const CHIPS = {
-  adopt: "Adopt", more: "Test more", drop: "Drop", fix: "Fix", inconclusive: "Inconclusive", decide: "Decide", found: "Found",
+  adopt: "Adopt", more: "Test more", drop: "Drop", fix: "Fix", inconclusive: "Inconclusive", decide: "Decide",
 };
 const chipKey = (v) => {
   const k = String(v ?? "").toLowerCase().replace(/[^a-z]/g, "");
@@ -31,7 +31,7 @@ main{max-width:980px;margin:0 auto;padding:16px}h1{font-size:1.6rem;margin:.2em 
 .alert{border-color:var(--bad)}table{border-collapse:collapse;width:100%}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 .tw{overflow-x:auto}.blank{height:2.2em;min-width:3em}.blank.wide{min-width:10em}
 .chip{display:inline-block;border-radius:999px;padding:1px 10px;font-size:.85rem;font-weight:600;border:1px solid var(--line)}
-.chip.adopt{color:var(--ok)}.chip.more,.chip.decide{color:var(--warn)}.chip.drop,.chip.fix{color:var(--bad)}.chip.inconclusive,.chip.found{color:var(--muted)}
+.chip.adopt{color:var(--ok)}.chip.more,.chip.decide{color:var(--warn)}.chip.drop,.chip.fix{color:var(--bad)}.chip.inconclusive
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}figure{margin:0}img,video{max-width:100%;height:auto;border-radius:6px}
 figcaption{color:var(--muted);font-size:.9rem}code{background:var(--card);padding:0 4px;border-radius:4px}
 `;
@@ -48,17 +48,42 @@ export function blindCopy(spec) {
 }
 
 const HINTS = new Set(["a", "b", "c", "control", "baseline", "variant", "new", "old"]);
+const NEUTRAL_PATH = /^[A-Za-z0-9_\-/]*t\d+-\d+\.[a-z0-9]+$/;
+const tokens = (s) => String(s ?? "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+const hintIn = (s) => tokens(s).find((t) => HINTS.has(t));
 
-// Paths that give a variant away (for example "...-A.png", "variant", "control") are reported as warnings.
-export function blindWarnings(spec) {
+// Every page: a media path must stay relative and inside the page folder.
+export function pathProblems(spec) {
+  const p = [];
+  for (const s of spec.sections || []) {
+    for (const it of s.items || []) {
+      const v = String(it.path ?? "");
+      if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(v)) p.push(`media path has a URL scheme or drive: ${v}`);
+      else if (v.startsWith("/") || v.startsWith("\\")) p.push(`media path must be relative, not absolute: ${v}`);
+      else if (v.split(/[\\/]/).includes("..")) p.push(`media path must not contain "..": ${v}`);
+    }
+  }
+  return p;
+}
+
+// Blind page: a path that is not a neutral name, or any hint word in a path or in the visible text, is a build failure.
+export function blindProblems(spec) {
   const w = [];
   for (const s of spec.sections || []) {
     for (const it of s.items || []) {
-      const stem = path.basename(String(it.path || "")).toLowerCase().replace(/\.[a-z0-9]+$/, "");
-      if (stem.split(/[-_. ]+/).some((tok) => HINTS.has(tok))) {
-        w.push(`blind item path may reveal its variant: ${it.path} (use a neutral file name)`);
-      }
+      const v = String(it.path || "");
+      if (!NEUTRAL_PATH.test(v)) w.push(`blind item path is not a neutral name like media/t1-1.png: ${v}`);
+      const h = hintIn(v);
+      if (h) w.push(`blind item path contains the hint word "${h}": ${v}`);
     }
+  }
+  const texts = [["title", spec.title], ["heading", spec.heading], ["lede", spec.lede]];
+  (spec.sections || []).forEach((s, i) => {
+    texts.push([`section ${i + 1} title`, s.title], [`section ${i + 1} text`, s.text], [`section ${i + 1} question`, s.question]);
+  });
+  for (const [where, t] of texts) {
+    const h = hintIn(t);
+    if (h) w.push(`blind page ${where} contains the hint word "${h}"`);
   }
   return w;
 }
@@ -89,16 +114,19 @@ function boardHtml(board) {
     + `<div class="tw"><table><thead><tr><th>Idea</th><th>Verdict</th><th>Evidence</th><th>Owner</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
 }
 
-// Returns { html, warnings }. Throws for a blind spec without a usable review block.
+// Returns { html, warnings }. Throws for a bad media path, or a blind spec without a review block or with variant hints.
 export function buildPage(specIn) {
   const blind = specIn.blind === true;
   const warnings = [];
   let spec = specIn;
   let body = "";
+  const bad = pathProblems(specIn);
+  if (bad.length) throw new Error(bad.join("; "));
   if (blind) {
     const problems = reviewProblems(specIn);
     if (problems.length) throw new Error(`blind page needs a review block: ${problems.join("; ")}`);
-    warnings.push(...blindWarnings(specIn));
+    const hints = blindProblems(specIn);
+    if (hints.length) throw new Error(`blind page would reveal variants: ${hints.join("; ")}`);
     spec = blindCopy(specIn);
     body = reviewHtml(spec, esc, md) + spec.sections.map((s) => sectionHtml(s, true)).join("");
   } else {

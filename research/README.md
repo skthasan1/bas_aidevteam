@@ -51,4 +51,4 @@ node research/tools/check-research.mjs --registry research/registry/registry.jso
 4. A judged test ends in an issue or an explicit "no action: reason" line.
 5. Media (pictures, clips, audio) never go into git.
 
-License: to be set by the owner.
+License: CC BY 4.0, as for the whole kit (see the top-level README).

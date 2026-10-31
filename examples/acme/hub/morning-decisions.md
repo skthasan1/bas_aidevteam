@@ -3,7 +3,7 @@
 Purpose: one short page the owner reads first thing: only the decisions that block the team today, each answerable in a word. Written by the tech lead from the queue. Save as `briefings/<date>-decisions.md`.
 
 ```markdown
-# Decisions for <owner>, <date>
+# Decisions for Dana, <date>
 
 Reply with the id and your choice, for example "D-004: b". Anything not answered stays open and the team works on what it can.
 

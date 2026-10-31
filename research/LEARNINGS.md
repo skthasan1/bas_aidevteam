@@ -15,7 +15,7 @@ Purpose: hygiene rules for blind tests, evidence pages, spend and the registry, 
 - **Neutral names.** Items are `t1-1`, `t1-2`. No A or B, no variant words in file names, captions or metadata. Why: one hint breaks the whole test.
 - **Same format, size, canvas and length for every variant.** Why: a wide picture next to a tall one, or 180 KB next to 2 MB, gives the variant away.
 - **Match loudness before shuffling.** Do not boost near-silent clips: it turns noise into sound. Strip their audio and say so on the sheet. Why: the louder clip wins, whatever it says.
-- **Count the items in the message to the judges.** Why: judges count, and a wrong count ("28" for 29 clips) destroys trust in the sheet.
+- **Count the items in the message to the judges.** Why: judges count, and a wrong count (saying 28 when there are 29) destroys trust in the sheet.
 - **The tester measures; people judge.** The tester or runner may check sizes, lengths and loudness. The team's ranking is the evidence. Do not give the tester the key. Why: an agent cannot judge taste and a knowing tester is not blind.
 - **Every blind page carries its "How to review" block on the page itself.** Written from the template, not typed per test: how to score, alone first, a guess before the key, one question per file. The check tool fails a blind spec without it. Why: instructions sent in chat get lost; the page is what judges have open.
 - **A relayed message that points judges at a sheet names the sheet.** "Please review the sheet `t7-listening`", not "the new sheet". Why: with several open sheets, judges review the wrong one and the scores are lost.
@@ -41,5 +41,5 @@ Purpose: hygiene rules for blind tests, evidence pages, spend and the registry, 
 
 - **Media never go into git** (pictures, clips, audio). Use the team's media store. Provider URLs expire: do not keep them as files. Why: media bloat history forever and cannot be removed cleanly.
 - **Only variable names are written down, never values.** Keys live in each person's own environment file.
-- **Never write into a live project.** Work in a throwaway copy. Why: a test run once interrupted a person's running job.
+- **Never write into a live project.** Work in a throwaway copy. Why: a test run against a live project can interrupt someone's running work.
 - **Real people in pictures:** consent rules apply. A provider refusal is a finding; do not work around it.

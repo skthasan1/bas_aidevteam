@@ -21,11 +21,33 @@ export class GhError extends Error {
   }
 }
 
+// Read-only by default: only these subcommands may run, and "api" only as a GET. Anything else needs { write: true } on that call,
+// which the watches never pass.
+const READ_ONLY = new Set(["pr list", "pr view", "pr diff", "pr checks", "issue list", "issue view"]);
+const FIELD_FLAG = /^(?:-[fF]|--(?:field|raw-field|input))(?:$|=)|^-[fF]./;
+
+export function assertReadOnly(args) {
+  if (args[0] === "api") {
+    for (let i = 1; i < args.length; i++) {
+      const a = args[i];
+      let method;
+      if (a === "-X" || a === "--method") method = args[i + 1];
+      else if (a.startsWith("--method=")) method = a.slice(9);
+      else if (/^-X./.test(a)) method = a.slice(2);
+      if (method !== undefined && String(method).toUpperCase() !== "GET") throw new GhError(args, new Error(`read-only gh wrapper: api method ${method} needs { write: true }`));
+      if (FIELD_FLAG.test(a)) throw new GhError(args, new Error("read-only gh wrapper: api field flags would turn the request into a POST; they need { write: true }"));
+    }
+    return;
+  }
+  if (!READ_ONLY.has(`${args[0]} ${args[1]}`)) throw new GhError(args, new Error(`read-only gh wrapper: "${args[0]} ${args[1] ?? ""}" is not allowed without { write: true }`));
+}
+
 export function createGh({ dryRun = false, runner = defaultRunner, log = console.log } = {}) {
-  function run(args, { input } = {}) {
+  function run(args, { input, write = false } = {}) {
     if (!Array.isArray(args) || !args.every((a) => typeof a === "string")) {
       throw new TypeError("gh arguments must be an array of strings");
     }
+    if (write !== true) assertReadOnly(args);
     if (dryRun) {
       log(`[dry-run] gh ${args.map(quote).join(" ")}`);
       return null;
