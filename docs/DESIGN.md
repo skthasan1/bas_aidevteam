@@ -110,3 +110,22 @@ Hosting the AI sessions, a web dashboard, billing, a hosted secrets service. The
 1. License (decided by the owner, 2026-10-31): CC BY 4.0, the same as Build@Scale with AI. Attribution to keep: "Build@Scale with AI by Siva Kannathasan" (this kit: "Build@Scale AI Dev Team, part of Build@Scale with AI by Siva Kannathasan"). The full legal text is in LICENSE. Note: the sibling's README says CC BY 4.0 but the sibling repository has no LICENSE file, so GitHub shows no license for it; adding the file there is a small follow-up.
 2. Home organization and visibility of the repository.
 3. Whether `/scaffold` in Build@Scale should offer to onboard an AI team (a small change in that repository).
+
+## 10. Two ways to use it: solo and team (v0.2 plan)
+
+The kit serves one person on their own and a team of people, from the same files. The mode is one line in the config (`mode: solo` or `mode: team`); nothing else forks.
+
+| | Solo | Team |
+|---|---|---|
+| Owner | the person; they are also the only approver | one named owner per project, who may delegate approvals in writing |
+| Lead AI | the person's own tech lead AI; reviews their AI developer's work | one lead AI per project, chosen by the project owner and named in the config |
+| Local AIs | all of them belong to the one person | each person may keep a local tech lead for their own work; it has no authority over another person's AIs or projects |
+| Cross-team work | none, or through a contact card | through the protocol: clearances, contact cards, escalation to the owner |
+| Guardrails | enforced by checks (CI template, `doctor`), because nobody else is watching | the same checks, plus the owner's own reads for T2 and T3 |
+| Starting roles | tech lead + AI developer; QA lead next | as many as the organization wants |
+
+Rules that hold in both modes:
+- A lead AI merges only where the project owner granted that in writing, and never decides spend, releases, or access.
+- Two leads that disagree escalate to the project owner; neither overrides the other.
+- Growing from solo to team changes the config and adds people; no file is rewritten.
+- `doctor` checks that each project names exactly one owner and one lead, and that guardrails work without a person watching.
