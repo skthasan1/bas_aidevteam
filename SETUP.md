@@ -44,7 +44,8 @@ For each project, ask:
 For each person (in solo mode, only the owner):
 
 1. Which AI workers do they want? The roles are tech lead, AI developer, QA lead, security and compliance lead, and researcher. A person may run several of one role (for example three AI developers) and may skip roles. Recommend: tech lead plus one AI developer to start.
-2. What account will each AI worker use on GitHub (its own bot account or app; never the person's own login)? If none exists yet, leave it blank: the to-do will explain.
+2. **How will they run each worker?** (a) A window of their editor (for example a VS Code window opened on the worker's own folder), (b) a terminal session in the worker's folder, (c) in the background on a schedule (read-only work such as reviews, tests and audits; the optional `tools/run-role.mjs` and `tools/panel.mjs` support this). Any mix is fine, and one person may use different ways for different workers. Recommend (a) or (b) for every worker at first; add (c) later for routine reviews. Write the answer next to each worker. If a worker runs in an editor window, offer a color for its window (the kit has a default per role, so the person can tell who is who the moment a window opens) and let them override it with a `#rrggbb` value.
+3. What account will each AI worker use on GitHub (its own bot account or app; never the person's own login)? If none exists yet, leave it blank: the to-do will explain.
 
 Then ask the **coverage questions**, once per project. These four functions are never optional; each must be covered by an AI role someone runs or by a named person:
 
@@ -78,7 +79,7 @@ Every project the team works on adopts the sibling framework, **Build@Scale with
 ## Phase 6: start-up
 
 1. Put the kit's instruction snippet (`templates/hub/CLAUDE.md.snippet.md`) into the instruction file your agent reads in the hub folder (`CLAUDE.md`, `AGENTS.md` or the equivalent), and fill in the person's details.
-2. Tell the person how to start each AI worker: open the agent in that worker's own folder and paste the start-up brief from `<hub>/briefs/<role>-startup.md`. Each worker gets its own folder, its own ports, its own database and its own account.
+2. Tell the person how to start each AI worker, in the way they chose: open the worker's own folder (as an editor window or in a terminal), start the agent there, and paste the start-up brief from `<hub>/briefs/<role>-startup.md`. Each worker gets its own folder, its own ports, its own database and its own account, whichever way it is run. The onboarding script writes `<hub>/START-WORKERS.md` with the exact steps per worker for the way it is run, and, for editor workers, a `workers/<worker>/vscode-settings.json` (window title and colors). With the person's yes, copy each into that worker's own folder as `.vscode/settings.json` and add that path to the folder's `.git/info/exclude`; never commit it. For a worker the person wants in the background, show them `tools/run-role.mjs` (dry run first) and `docs/PANEL.md`, and set that worker's `headless` setting in the config; never turn it on without their yes.
 3. Hand over `<hub>/ONBOARDING-TODO.md`: the steps only the person can do (accounts, tokens, repository settings, branch protection). Walk through the first three with them if they want. Never do these yourself.
 4. Summarize: what exists now, what is left, and the next small thing to do (usually: open the tech lead worker and review one pull request).
 

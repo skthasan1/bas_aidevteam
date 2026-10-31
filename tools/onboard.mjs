@@ -16,6 +16,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "./lib/cli.mjs";
 import { loadConfig, reposOf } from "./lib/config.mjs";
+import { listWorkers, startInstructions, vscodeSettings } from "./lib/workers.mjs";
 
 const KIT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TEXT_EXT = new Set([".md", ".txt", ".json", ".csv", ".yml", ".yaml", ".html", ".mjs", ".js"]);
@@ -104,13 +105,19 @@ export function plan({ config, kitRoot = KIT_ROOT, hubPath = "" }) {
     files.push({ rel, content, source: `templates/hub/${rel}` });
   }
   const { ai_accounts, bots, ai_comment_prefixes, ...rest } = config;
-  files.push({ rel: "qa-projects.json", content: JSON.stringify({ ...rest, roles: config.roles.map((r) => ({ name: r.name, account: r.account })), bots, ai_comment_prefixes, ai_accounts }, null, 2) + "\n", source: "config" });
+  // Write a worker without the empty headless/folder defaults the loader adds.
+  const slim = (w) => ({ name: w.name, account: w.account, ...(w.headless ? { headless: w.headless } : {}), ...(w.folder ? { folder: w.folder } : {}), ...(w.surface ? { surface: w.surface } : {}), ...(w.color ? { color: w.color } : {}) });
+  const people = Object.fromEntries(Object.entries(config.people).map(([h, x]) => [h, { ...x, roles: x.roles.map(slim) }]));
+  files.push({ rel: "qa-projects.json", content: JSON.stringify({ ...rest, people, roles: config.roles.map(slim), bots, ai_comment_prefixes, ai_accounts }, null, 2) + "\n", source: "config" });
   for (const role of config.roles) {
     const src = path.join(kitRoot, "roles", `${role.name}.md`);
     if (!fs.existsSync(src)) { warnings.push(`roles/${role.name}.md not found: no start-up brief for ${role.name}`); continue; }
     files.push({ rel: `briefs/${role.name}-startup.md`, content: fill(fs.readFileSync(src, "utf8"), varsFor(config, role), { angle: angleFor(config, role, hubPath) }), source: `roles/${role.name}.md` });
   }
   files.push({ rel: "ONBOARDING-TODO.md", content: todoText(config), source: "generated" });
+  files.push({ rel: "START-WORKERS.md", content: startInstructions(config, hubPath || "<hub-path>"), source: "generated" });
+  // One VS Code settings file per worker that runs in an editor window; the person copies it into the worker's own folder.
+  for (const w of listWorkers(config)) if (w.surface === "editor") files.push({ rel: `workers/${w.slug}/vscode-settings.json`, content: JSON.stringify(vscodeSettings(w), null, 2) + "\n", source: "generated" });
   const dupes = files.map((f) => f.rel).filter((r, i, a) => a.indexOf(r) !== i);
   if (dupes.length) warnings.push(`duplicate target paths: ${[...new Set(dupes)].join(", ")}`);
   return { files, warnings };

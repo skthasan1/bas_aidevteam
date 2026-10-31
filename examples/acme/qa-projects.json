@@ -8,10 +8,12 @@
   },
   "roles": {
     "tech-lead": {
-      "account": "acme-techlead-bot"
+      "account": "acme-techlead-bot",
+      "headless": "read-only"
     },
     "ai-developer": {
-      "account": "acme-dev-bot"
+      "account": "acme-dev-bot",
+      "headless": "write-branch"
     },
     "qa-lead": {
       "account": "acme-qa-bot"
@@ -92,16 +94,33 @@
   "people": {
     "dana-owner": {
       "roles": [
-        "tech-lead",
-        "qa-lead",
-        "researcher",
+        {
+          "name": "tech-lead",
+          "headless": "read-only",
+          "surface": "editor",
+          "account": "acme-techlead-bot"
+        },
+        {
+          "name": "qa-lead",
+          "surface": "terminal",
+          "account": "acme-qa-bot"
+        },
+        {
+          "name": "researcher",
+          "surface": "terminal",
+          "account": "acme-research-bot"
+        },
         {
           "name": "ai-developer",
-          "account": "acme-dev-bot"
+          "account": "acme-dev-bot",
+          "headless": "write-branch",
+          "surface": "editor"
         },
         {
           "name": "security-lead",
-          "account": "acme-security-bot"
+          "account": "acme-security-bot",
+          "surface": "background",
+          "headless": "read-only"
         }
       ]
     },
@@ -109,17 +128,28 @@
       "roles": [
         {
           "name": "ai-developer",
-          "account": "sam-dev-bot-1"
+          "account": "sam-dev-bot-1",
+          "surface": "editor"
         },
         {
           "name": "ai-developer",
-          "account": "sam-dev-bot-2"
+          "account": "sam-dev-bot-2",
+          "surface": "editor"
         },
         {
           "name": "ai-developer",
-          "account": "sam-dev-bot-3"
+          "account": "sam-dev-bot-3",
+          "surface": "editor"
         }
       ]
     }
+  },
+  "runner": {
+    "command": "<agent-a-command>",
+    "args": [
+      "<non-interactive flag from your agent's documentation>"
+    ],
+    "prompt_via": "arg",
+    "timeout_minutes": 30
   }
 }

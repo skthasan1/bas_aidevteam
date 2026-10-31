@@ -1,0 +1,14 @@
+{
+  "window.title": "ai-developer - sam-dev-bot-2 - ${rootName}${separator}${activeEditorShort}",
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#047857",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#047857",
+    "titleBar.inactiveForeground": "#ffffff",
+    "activityBar.background": "#047857",
+    "activityBar.foreground": "#ffffff",
+    "activityBar.inactiveForeground": "#e5e7eb",
+    "statusBar.background": "#047857",
+    "statusBar.foreground": "#ffffff"
+  }
+}

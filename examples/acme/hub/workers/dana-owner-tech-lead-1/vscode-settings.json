@@ -1,0 +1,14 @@
+{
+  "window.title": "tech-lead - acme-techlead-bot - ${rootName}${separator}${activeEditorShort}",
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#1d4ed8",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#1d4ed8",
+    "titleBar.inactiveForeground": "#ffffff",
+    "activityBar.background": "#1d4ed8",
+    "activityBar.foreground": "#ffffff",
+    "activityBar.inactiveForeground": "#e5e7eb",
+    "statusBar.background": "#1d4ed8",
+    "statusBar.foreground": "#ffffff"
+  }
+}

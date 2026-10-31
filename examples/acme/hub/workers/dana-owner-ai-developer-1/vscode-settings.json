@@ -1,0 +1,14 @@
+{
+  "window.title": "ai-developer - acme-dev-bot - ${rootName}${separator}${activeEditorShort}",
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#166534",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#166534",
+    "titleBar.inactiveForeground": "#ffffff",
+    "activityBar.background": "#166534",
+    "activityBar.foreground": "#ffffff",
+    "activityBar.inactiveForeground": "#e5e7eb",
+    "statusBar.background": "#166534",
+    "statusBar.foreground": "#ffffff"
+  }
+}

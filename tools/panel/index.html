@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Team control panel</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <h1>Team control panel</h1>
+  <p class="meta"><span id="mode-badge" class="badge">mode: loading</span>
+    <button type="button" id="refresh">Refresh</button></p>
+</header>
+<nav aria-label="Sections" class="nav">
+  <a href="#overview">Overview</a>
+  <a href="#team">Team</a>
+  <a href="#queue">Decisions</a>
+  <a href="#runs">Runs</a>
+  <a href="#doctor">Doctor</a>
+</nav>
+<main id="main" tabindex="-1">
+  <p id="page-status" class="status" role="status" aria-live="polite"></p>
+
+  <section id="overview" aria-labelledby="h-overview">
+    <h2 id="h-overview">Overview</h2>
+    <div id="overview-body" class="state">Loading...</div>
+  </section>
+
+  <section id="team" aria-labelledby="h-team">
+    <h2 id="h-team">Team</h2>
+    <div id="team-body" class="state">Loading...</div>
+    <form id="run-form" class="card" hidden>
+      <h3 id="run-title">Run a worker</h3>
+      <p class="hint">A run needs a preview first. The preview shows the exact command and the full prompt. Nothing starts until you press Start run.</p>
+      <p><strong>Worker:</strong> <span id="run-worker"></span></p>
+      <label for="run-task">Task</label>
+      <textarea id="run-task" rows="4" maxlength="20000" required></textarea>
+      <div class="row">
+        <button type="submit" id="run-preview">Preview</button>
+        <button type="button" id="run-start" disabled>Start run</button>
+        <button type="button" id="run-cancel">Close</button>
+      </div>
+      <p id="run-msg" class="status" role="status" aria-live="polite"></p>
+      <pre id="run-preview-text" class="log" tabindex="0" hidden></pre>
+    </form>
+  </section>
+
+  <section id="queue" aria-labelledby="h-queue">
+    <h2 id="h-queue">Decisions queue</h2>
+    <div id="queue-body" class="state">Loading...</div>
+    <h3>Handoff notes</h3>
+    <div id="handoff-body" class="state">Loading...</div>
+    <h3>Watches</h3>
+    <div id="watch-body" class="state">Loading...</div>
+  </section>
+
+  <section id="runs" aria-labelledby="h-runs">
+    <h2 id="h-runs">Runs</h2>
+    <div id="runs-body" class="state">Loading...</div>
+    <h3 id="log-title">Log</h3>
+    <pre id="log-view" class="log" tabindex="0" aria-live="polite">Select a run to see its log.</pre>
+  </section>
+
+  <section id="doctor" aria-labelledby="h-doctor">
+    <h2 id="h-doctor">Doctor results</h2>
+    <div id="doctor-body" class="state">Loading...</div>
+  </section>
+</main>
+<footer class="foot">
+  <p>Local only. This page cannot change the config, merge, push, comment on GitHub or touch keys. It starts and stops headless runs and shows what is in the hub.</p>
+</footer>
+<script src="/app.js"></script>
+</body>
+</html>

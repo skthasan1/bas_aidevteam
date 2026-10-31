@@ -16,6 +16,8 @@ Added:
 - Four required functions per project (review, test, security, decision), each covered by a role or a named person; `tools/doctor.mjs` fails the setup when one is missing.
 - `tools/check-public.mjs` scans for names, tokens, emails, paths and issue numbers before you publish; it needs your own deny list (`--denylist`), or `--allow-example` to accept the placeholder one.
 - Tools: `tools/onboard.mjs`, `tools/doctor.mjs`, `tools/pr-watch.mjs`, `tools/question-watch.mjs`, `tools/merge-watch.mjs`, `tools/check-public.mjs`.
+- Workers run where you like (`surface`: editor, terminal or background): `START-WORKERS.md` per worker, and a color and window title per VS Code worker.
+- `tools/run-role.mjs` (background runs, read-mostly, dry run first) and `tools/panel.mjs` (a local control panel); both optional, see `docs/PANEL.md`.
 - `SETUP.md`: the guided setup a coding agent follows from one pasted prompt (forms with recommendations, dry run, doctor, mandatory Build@Scale with AI in every project).
 - Docs: architecture, security model, getting started, roles.
 

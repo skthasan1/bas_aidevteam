@@ -9,11 +9,13 @@
   "roles": [
     {
       "name": "tech-lead",
-      "account": "acme-techlead-bot"
+      "account": "acme-techlead-bot",
+      "headless": "read-only"
     },
     {
       "name": "ai-developer",
-      "account": "acme-dev-bot"
+      "account": "acme-dev-bot",
+      "headless": "write-branch"
     },
     {
       "name": "qa-lead",
@@ -81,23 +83,31 @@
       "roles": [
         {
           "name": "tech-lead",
-          "account": ""
+          "account": "acme-techlead-bot",
+          "headless": "read-only",
+          "surface": "editor"
         },
         {
           "name": "qa-lead",
-          "account": ""
+          "account": "acme-qa-bot",
+          "surface": "terminal"
         },
         {
           "name": "researcher",
-          "account": ""
+          "account": "acme-research-bot",
+          "surface": "terminal"
         },
         {
           "name": "ai-developer",
-          "account": "acme-dev-bot"
+          "account": "acme-dev-bot",
+          "headless": "write-branch",
+          "surface": "editor"
         },
         {
           "name": "security-lead",
-          "account": "acme-security-bot"
+          "account": "acme-security-bot",
+          "headless": "read-only",
+          "surface": "background"
         }
       ]
     },
@@ -105,18 +115,29 @@
       "roles": [
         {
           "name": "ai-developer",
-          "account": "sam-dev-bot-1"
+          "account": "sam-dev-bot-1",
+          "surface": "editor"
         },
         {
           "name": "ai-developer",
-          "account": "sam-dev-bot-2"
+          "account": "sam-dev-bot-2",
+          "surface": "editor"
         },
         {
           "name": "ai-developer",
-          "account": "sam-dev-bot-3"
+          "account": "sam-dev-bot-3",
+          "surface": "editor"
         }
       ]
     }
+  },
+  "runner": {
+    "command": "<agent-a-command>",
+    "args": [
+      "<non-interactive flag from your agent's documentation>"
+    ],
+    "prompt_via": "arg",
+    "timeout_minutes": 30
   },
   "bots": [
     "dependabot[bot]",

@@ -97,6 +97,11 @@ export function checkPolicy(config) {
       seen.set(lower(w.account), handle);
     }
   }
+  // Headless runs: write-branch is for ai-developer only, and a runner must be configured for any headless worker.
+  const allWorkers = [...config.roles.map((w) => ({ ...w, at: `roles.${w.name}` })), ...Object.entries(config.people).flatMap(([h, x]) => x.roles.map((w) => ({ ...w, at: `people.${h}.${w.name}` })))];
+  for (const w of allWorkers) if (w.headless === "write-branch" && w.name !== "ai-developer") errors.push(`${w.at}: headless "write-branch" is only for ai-developer; ${w.name} can run headless as "read-only" at most`);
+  for (const w of allWorkers) if (w.surface === "background" && !w.headless) errors.push(`${w.at}: surface is "background" but headless is not set; set headless to "read-only" (or "write-branch" for ai-developer)`);
+  if (!config.runner && allWorkers.some((w) => w.headless)) errors.push('some worker is headless but the config has no "runner" (command and arguments of the agent to run)');
   return { errors, warnings };
 }
 

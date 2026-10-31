@@ -104,5 +104,34 @@
     "project": "acme-notes",
     "hours": 12
   },
-  "mode": "team"
+  "mode": "team",
+  "runner": {
+    "note": "Headless runs (tools/run-role.mjs). Check your agent's own documentation for the exact non-interactive flags; these are placeholders. Set \"headless\" on a worker (false | \"read-only\" | \"write-branch\", the last for ai-developer only) and a \"folder\" to allow it.",
+    "command": "<agent-a-command>",
+    "args": [
+      "<non-interactive flag from your agent's documentation>"
+    ],
+    "prompt_via": "arg",
+    "timeout_minutes": 30
+  },
+  "runner_examples": {
+    "agent-a": {
+      "note": "Prompt as the last argument. Check your agent's own documentation for the exact non-interactive flags.",
+      "command": "<agent-a-command>",
+      "args": [
+        "<flag that runs one prompt and exits>"
+      ],
+      "prompt_via": "arg",
+      "timeout_minutes": 30
+    },
+    "agent-b": {
+      "note": "Prompt on standard input (better for long prompts). Check your agent's own documentation for the exact non-interactive flags.",
+      "command": "<agent-b-command>",
+      "args": [
+        "<flag that reads the prompt from standard input>"
+      ],
+      "prompt_via": "stdin",
+      "timeout_minutes": 60
+    }
+  }
 }

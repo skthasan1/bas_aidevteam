@@ -9,6 +9,14 @@ export const FUNCTIONS = ["review", "test", "security", "decision"];
 export const MODES = ["solo", "team"];
 // Who may merge in a project: only a person, the lead AI once the written conditions hold, or the lead AI only on the owner's word each time.
 export const MERGE = ["owner-only", "lead-after-conditions", "lead-on-owner-word"];
+// Headless runs (tools/run-role.mjs): false = never, "read-only" = reads and reports, "write-branch" = may commit to a new branch (ai-developer only).
+export const HEADLESS = [false, "read-only", "write-branch"];
+// How a worker is run: in an editor window, in a terminal, or in the background (needs headless). Empty means not chosen yet.
+export const SURFACES = ["editor", "terminal", "background"];
+const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+export const RUNNER_PROMPT_VIA = ["arg", "stdin"];
+export const RUNNER_DEFAULT_MINUTES = 30;
+export const RUNNER_MAX_MINUTES = 240;
 const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const HANDLE_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 
@@ -33,16 +41,28 @@ export function validateConfig(raw) {
 
   const roleInput = raw.roles ?? ROLE_NAMES;
   const roles = [];
-  const addRole = (name, account) => {
+  // headless and folder are optional per worker; see HEADLESS above.
+  const workerExtras = (at, r) => {
+    const headless = isObj(r) && r.headless !== undefined ? r.headless : false;
+    if (!HEADLESS.includes(headless)) errors.push(`${at}.headless must be false, "read-only" or "write-branch"`);
+    const folder = isObj(r) && r.folder !== undefined ? r.folder : "";
+    if (typeof folder !== "string") errors.push(`${at}.folder must be a string`);
+    const surface = isObj(r) && r.surface !== undefined ? r.surface : "";
+    if (surface !== "" && !SURFACES.includes(surface)) errors.push(`${at}.surface must be one of ${SURFACES.join(", ")}`);
+    const color = isObj(r) && r.color !== undefined ? r.color : "";
+    if (color !== "" && !(typeof color === "string" && COLOR_RE.test(color))) errors.push(`${at}.color must be a #rrggbb color`);
+    return { headless: HEADLESS.includes(headless) ? headless : false, folder: typeof folder === "string" ? folder : "", surface: SURFACES.includes(surface) ? surface : "", color: typeof color === "string" && COLOR_RE.test(color) ? color : "" };
+  };
+  const addRole = (name, account, src) => {
     if (!ROLE_NAMES.includes(name)) { errors.push(`roles: unknown role "${name}" (known: ${ROLE_NAMES.join(", ")})`); return; }
     if (account !== undefined && account !== "" && (typeof account !== "string" || !HANDLE_RE.test(account))) errors.push(`roles.${name}: invalid account`);
-    roles.push({ name, account: account ?? "" });
+    roles.push({ name, account: account ?? "", ...workerExtras(`roles.${name}`, src) });
   };
-  if (Array.isArray(roleInput)) roleInput.forEach((r) => (typeof r === "string" ? addRole(r) : addRole(r?.name, r?.account)));
+  if (Array.isArray(roleInput)) roleInput.forEach((r) => (typeof r === "string" ? addRole(r) : addRole(r?.name, r?.account, r)));
   else if (isObj(roleInput)) {
     for (const [name, v] of Object.entries(roleInput)) {
       if (v === false || (isObj(v) && v.enabled === false)) continue;
-      addRole(name, isObj(v) ? v.account : undefined);
+      addRole(name, isObj(v) ? v.account : undefined, v);
     }
   } else errors.push("roles must be an array of role names or an object");
 
@@ -60,7 +80,7 @@ export function validateConfig(raw) {
       const account = typeof r === "string" ? "" : (r?.account ?? "");
       if (!ROLE_NAMES.includes(name)) { errors.push(`people.${handle}: unknown role "${name}" (known: ${ROLE_NAMES.join(", ")})`); continue; }
       if (account !== "" && (typeof account !== "string" || !HANDLE_RE.test(account))) { errors.push(`people.${handle}.${name}: invalid account`); continue; }
-      workers.push({ name, account });
+      workers.push({ name, account, ...workerExtras(`people.${handle}.${name}`, r) });
     }
     people[handle] = { roles: workers };
   }
@@ -121,6 +141,21 @@ export function validateConfig(raw) {
     }
   }
 
+  // Optional runner for headless runs: the command (never run through a shell), its fixed arguments and how the prompt is handed over.
+  let runner;
+  if (raw.runner !== undefined) {
+    const r = raw.runner;
+    if (!isObj(r)) errors.push("runner must be an object {command, args, prompt_via, timeout_minutes}");
+    else {
+      if (typeof r.command !== "string" || !r.command.trim()) errors.push("runner.command must be a non-empty string");
+      if (r.args !== undefined && (!Array.isArray(r.args) || !r.args.every((a) => typeof a === "string"))) errors.push("runner.args must be an array of strings");
+      if (r.prompt_via !== undefined && !RUNNER_PROMPT_VIA.includes(r.prompt_via)) errors.push(`runner.prompt_via must be one of ${RUNNER_PROMPT_VIA.join(", ")}`);
+      const t = r.timeout_minutes;
+      if (t !== undefined && (typeof t !== "number" || !Number.isFinite(t) || t <= 0 || t > RUNNER_MAX_MINUTES)) errors.push(`runner.timeout_minutes must be a number above 0 and at most ${RUNNER_MAX_MINUTES}`);
+      runner = { command: r.command, args: Array.isArray(r.args) ? r.args : [], prompt_via: r.prompt_via ?? "arg", timeout_minutes: t ?? RUNNER_DEFAULT_MINUTES };
+    }
+  }
+
   const config = errors.length ? null : {
     ...raw,
     organization: org,
@@ -129,6 +164,7 @@ export function validateConfig(raw) {
     owner: { name: owner.name ?? "", handles: ownerHandles },
     roles,
     projects,
+    ...(runner ? { runner } : {}),
     bots: raw.bots ?? ["dependabot[bot]", "github-actions[bot]"],
     ai_comment_prefixes: raw.ai_comment_prefixes ?? ["Reviewed by", "QA report by", "Cleared by"],
     ai_accounts: raw.ai_accounts ?? [],
