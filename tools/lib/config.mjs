@@ -2,7 +2,8 @@
 import fs from "node:fs";
 
 export const ROLE_NAMES = ["tech-lead", "ai-developer", "qa-lead", "security-lead", "researcher"];
-export const TESTING = ["active", "hold", "later"];
+// "archived": work stopped, repositories kept as they are. A project that is archived, or planned (no repositories yet, not watched) is dormant.
+export const TESTING = ["active", "hold", "later", "archived"];
 export const WATCH = ["merge", "review", "off"];
 // The functions every project must cover. Each is covered by a role (an AI worker somebody runs) or a named person, never by a check alone.
 export const FUNCTIONS = ["review", "test", "security", "decision"];
@@ -93,10 +94,12 @@ export function validateConfig(raw) {
       if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) errors.push(`${at}: project id must be lowercase letters, digits and dashes`);
       if (!isObj(p)) { errors.push(`${at}: must be an object`); continue; }
       if (typeof p.name !== "string" || !p.name) errors.push(`${at}.name is required`);
-      if (!isObj(p.repos) || Object.keys(p.repos).length === 0) errors.push(`${at}.repos must map a short name to "owner/repo"`);
+      const noRepos = isObj(p.repos) && Object.keys(p.repos).length === 0;
+      const planned = noRepos && ["later", "archived"].includes(p.testing ?? "later") && (p.watch ?? "off") === "off";
+      if (!isObj(p.repos) || (Object.keys(p.repos).length === 0 && !planned)) errors.push(`${at}.repos must map a short name to "owner/repo" (a project with testing "later" or "archived" and watch "off" may list none yet)`);
       else for (const [k, v] of Object.entries(p.repos)) if (typeof v !== "string" || !REPO_RE.test(v)) errors.push(`${at}.repos.${k}: "${v}" is not owner/repo`);
-      if (p.default !== undefined && (typeof p.default !== "string" || !REPO_RE.test(p.default))) errors.push(`${at}.default is not owner/repo`);
-      if (!Array.isArray(p.owners) || p.owners.length === 0) errors.push(`${at}.owners must list at least one handle`);
+      if (p.default !== undefined && !(planned && p.default === "") && (typeof p.default !== "string" || !REPO_RE.test(p.default))) errors.push(`${at}.default is not owner/repo`);
+      if (!Array.isArray(p.owners) || (p.owners.length === 0 && !planned)) errors.push(`${at}.owners must list at least one handle`);
       else for (const h of p.owners) if (typeof h !== "string" || !HANDLE_RE.test(h)) errors.push(`${at}.owners: invalid handle ${JSON.stringify(h)}`);
       const testing = p.testing ?? "later";
       if (!TESTING.includes(testing)) errors.push(`${at}.testing must be one of ${TESTING.join(", ")}`);
@@ -115,7 +118,7 @@ export function validateConfig(raw) {
       const members = p.members ?? [];
       if (!Array.isArray(members)) errors.push(`${at}.members must be an array of handles`);
       else for (const h of members) if (typeof h !== "string" || !HANDLE_RE.test(h)) errors.push(`${at}.members: invalid handle ${JSON.stringify(h)}`);
-      projects[id] = { ...p, default: p.default ?? Object.values(p.repos ?? {})[0], testing, watch, merge, covers: isObj(covers) ? covers : {}, lead: p.lead ?? "", members: Array.isArray(members) ? members : [] };
+      projects[id] = { ...p, dormant: planned || (p.testing ?? "later") === "archived", default: p.default ?? Object.values(p.repos ?? {})[0], testing, watch, merge, covers: isObj(covers) ? covers : {}, lead: p.lead ?? "", members: Array.isArray(members) ? members : [] };
     }
   }
 

@@ -46,6 +46,7 @@ export function checkPolicy(config) {
   const personHandles = new Set([...config.owner.handles, ...Object.keys(config.people)].map(lower));
   for (const [id, p] of Object.entries(config.projects)) {
     const at = `projects.${id}`;
+    if (p.dormant) { warnings.push(`${at}: ${p.testing === "archived" ? "archived" : "planned, no repositories yet"}; no lead, merge or coverage rules are checked until it becomes active`); continue; }
     if (config.mode === "solo") {
       if (p.owners.length !== 1) errors.push(`${at}: solo mode needs exactly one owner (found ${p.owners.length})`);
       if (p.members.length) errors.push(`${at}: solo mode has no members; switch to mode "team" to add people`);
@@ -62,6 +63,7 @@ export function checkPolicy(config) {
   const runRoles = new Set([...config.roles.map((r) => r.name), ...Object.values(config.people).flatMap((x) => x.roles.map((w) => w.name))]);
   const hasPeople = Object.keys(config.people).length > 0;
   for (const [id, p] of Object.entries(config.projects)) {
+    if (p.dormant) continue;
     const at = `projects.${id}.covers`;
     const people = new Set([...p.owners, ...p.members].map(lower));
     // Roles somebody in this project runs. With a "people" section: each owner or member brings their own workers; an owner without an entry
