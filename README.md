@@ -75,7 +75,7 @@ Details and how to combine roles: [docs/ROLES.md](docs/ROLES.md).
 - [docs/SECURITY-MODEL.md](docs/SECURITY-MODEL.md) - identities, tokens, secrets, destructive actions, walls between projects
 - [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) - what the setup does, in plain steps
 - [docs/ROLES.md](docs/ROLES.md) - the roles and the four required functions
-- [docs/PANEL.md](docs/PANEL.md) - the optional local control panel and background runs
+- [docs/PANEL.md](docs/PANEL.md) - the optional local control panel and background runs (experimental)
 - `roles/`, `dev/`, `qa/`, `research/` - the briefs and kits for each role
 - `templates/` and `tools/` - hub and repository templates, the watches, `onboard`, `doctor`
 - [CHANGELOG.md](CHANGELOG.md) - release history
@@ -87,8 +87,8 @@ Details and how to combine roles: [docs/ROLES.md](docs/ROLES.md).
 - **Not a hosted dashboard or a billing tool.** The hub is plain files. An optional control panel runs on your own machine only (`docs/PANEL.md`).
 - **Not a security guarantee.** It lowers risk with separate identities, small permissions and written rules. It does not replace a real security review, and an AI can still be wrong.
 - **Not a replacement for human developers.** Humans and AI teams share the same repositories.
-- **Not finished.** This is version 0.1.0. The protocol and the tools will change.
+- **Not finished.** This is version 0.1.0. The protocol and the tools will change. The local control panel and the background runner (`tools/panel.mjs`, `tools/run-role.mjs`) are experimental: they are tested, but have not yet been used with a real coding agent or opened in every browser.
 
 ## License
 
-CC BY 4.0, the same as Build@Scale with AI: use it, adapt it, build products with it, share it with your team, and keep the attribution "Build@Scale AI Dev Team, part of Build@Scale with AI by Siva Kannathasan". The LICENSE file is added when this kit is published and linked from the framework.
+CC BY 4.0, the same as Build@Scale with AI: use it, adapt it, build products with it, share it with your team, and keep the attribution "Build@Scale AI Dev Team, part of Build@Scale with AI by Siva Kannathasan". The full text is in [LICENSE](LICENSE).

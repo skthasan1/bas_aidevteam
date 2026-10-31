@@ -1,5 +1,7 @@
 # Control panel and headless runs
 
+Status: experimental in 0.1.0. Tested, but not yet used with a real coding agent or checked in every browser; report what you find.
+
 Purpose: see the team on one local page, and start or stop a headless AI worker without opening its session.
 
 Two tools do this. They have no dependencies and need Node 20 or newer.
