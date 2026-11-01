@@ -26,7 +26,7 @@ export function diffHint(hubText, kitText) {
   return `yours has ${a.length} lines, the kit ${b.length}; first difference at line ${i + 1}: yours "${cut(a[i])}" / kit "${cut(b[i])}"`;
 }
 
-export function upgrade({ hub, apply = false, force = false, kitRoot = KIT_ROOT, log = console.log }) {
+export function upgrade({ hub, apply = false, force = false, config: configFile, kitRoot = KIT_ROOT, log = console.log }) {
   if (!hub) throw new Error("--hub <hub folder> is required");
   const root = path.resolve(hub);
   let st = null;
@@ -52,7 +52,8 @@ export function upgrade({ hub, apply = false, force = false, kitRoot = KIT_ROOT,
   if (order > 0 && !force) throw new Error(`the hub is marked ${marker.version}, newer than this kit (${kitVersion}). Update the kit first, or use --force.`);
 
   let config;
-  try { config = loadConfig(inside("qa-projects.json")); } catch (e) { throw new Error(`cannot read the hub's qa-projects.json (${e.message}): the kit text is filled in from it`); }
+  const configPath = configFile ? path.resolve(configFile) : inside("qa-projects.json");
+  try { config = loadConfig(configPath); } catch (e) { throw new Error(`cannot read the hub's config ${configPath} (${e.message}): the kit text is filled in from it. If your config is not <hub>/qa-projects.json, pass --config <file>.`); }
   const kitFiles = new Map();
   for (const f of plan({ config, kitRoot, hubPath: hub }).files) {
     if (f.source.startsWith("templates/hub/")) kitFiles.set(slash(f.rel), { content: f.content, hash: sha256(typeof f.content === "string" ? Buffer.from(f.content) : f.content) });
@@ -122,7 +123,7 @@ export function upgrade({ hub, apply = false, force = false, kitRoot = KIT_ROOT,
   put(MARKER_FILE, `${kitVersion}\n`);
   const kn = rows.filter((r) => r.write === "kit-new").length;
   log(`\nWrote ${written.length} file(s); the hub is now marked ${kitVersion}.${kn ? ` ${kn} file(s) of yours were kept: compare each with its ${NEW_SUFFIX} copy, merge what you want, then delete the ${NEW_SUFFIX} file.` : ""}`);
-  log(`Next: run  node tools/doctor.mjs --config ${path.join(hub, "qa-projects.json")} --hub ${hub}  to check the setup after the upgrade.`);
+  log(`Next: run  node tools/doctor.mjs --config ${configPath} --hub ${hub}  to check the setup after the upgrade.`);
   return { rows, written };
 }
 
@@ -134,13 +135,14 @@ function main() {
     if (parsed.positional.length) throw new Error(`unexpected argument "${parsed.positional[0]}" (yes/no flags take no value except true or false)`);
   } catch (e) { console.error(e.message); process.exitCode = 2; return; }
   if (flags.help) {
-    console.log(["Usage: node tools/upgrade.mjs --hub <hub folder> [--apply] [--force]",
+    console.log(["Usage: node tools/upgrade.mjs --hub <hub folder> [--config <file>] [--apply] [--force]",
+      "  --config your organization config, if it is not <hub>/qa-projects.json (read only)",
       "  --hub    the hub folder made by onboard (it must hold .bas-aidevteam-version)",
       "  --apply  update the safe files and write .kit-new files (without it: dry run, nothing is written)",
       "  --force  overwrite an existing .kit-new file, or upgrade a hub marked newer than this kit",
       "A file you edited is never overwritten. qa-projects.json and your notes, queue, briefings and runs are never touched."].join(String.fromCharCode(10)));
     return;
   }
-  try { upgrade({ hub: typeof flags.hub === "string" ? flags.hub : undefined, apply: !!flags.apply, force: !!flags.force }); } catch (e) { console.error(e.message); process.exitCode = 2; }
+  try { upgrade({ hub: typeof flags.hub === "string" ? flags.hub : undefined, config: typeof flags.config === "string" ? flags.config : undefined, apply: !!flags.apply, force: !!flags.force }); } catch (e) { console.error(e.message); process.exitCode = 2; }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main();

@@ -228,3 +228,16 @@ test("helpers: versions, changelog sections and the diff hint", () => {
   assert.deepEqual(changelogSections("# C\n\n## Unreleased\nx\n\n## 0.2.0 - a\nb\n\n## 0.1.0 - c\nd\n").map((s) => s.version), ["0.2.0", "0.1.0"]);
   assert.match(diffHint("a\nb\n", "a\nc\n"), /first difference at line 2: yours "b" \/ kit "c"/);
 });
+
+test("--config reads the organization config from another place than <hub>/qa-projects.json", () => {
+  const { kit, hub } = setup();
+  release(kit);
+  const elsewhere = tmpDir();
+  fs.copyFileSync(path.join(hub, "qa-projects.json"), path.join(elsewhere, "org.json"));
+  fs.renameSync(path.join(hub, "qa-projects.json"), path.join(elsewhere, "moved.json"));
+  assert.throws(() => upgrade({ hub, kitRoot: kit, log: () => {} }), /cannot read the hub's config .*qa-projects\.json.*--config/);
+  const q = quiet();
+  const res = upgrade({ hub, kitRoot: kit, config: path.join(elsewhere, "org.json"), log: q.log });
+  assert.deepEqual(res.written, []);
+  assert.match(q.lines.join("\n"), /Available kit version: 0\.2\.0/);
+});
