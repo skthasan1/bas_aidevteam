@@ -8,6 +8,8 @@ import { parseArgs } from "./lib/cli.mjs";
 import { loadConfig, selectProjects, reposOf } from "./lib/config.mjs";
 import { createGh } from "./lib/gh.mjs";
 import { readState, writeState } from "./lib/state.mjs";
+import { compileAreas, t3Status, T3_HINT } from "./lib/t3.mjs";
+import { securityLoginOf } from "./t3-check.mjs";
 
 const FIELDS = "number,title,author,baseRefName,isDraft,headRefOid,additions,deletions,url,statusCheckRollup";
 
@@ -50,7 +52,16 @@ export function prWatch({ config, projectId, gh, stateDir = ".state", all = fals
         const line = `${key} [${p.baseRefName}] ${author}${p.isDraft ? " DRAFT" : ""} +${p.additions}/-${p.deletions} checks:${checksOf(p)} :: ${String(p.title).slice(0, 90)}  ${p.url}`;
         if (isBotAuthor(p.author, skipAuthors) || skipTitles.some((r) => r.test(p.title))) { result.other.push(line); continue; }
         const state = !(key in seen) ? "NEW" : seen[key] === next[key] ? "seen" : seen[key] === `draft:${p.headRefOid}` ? "READY" : "CHANGED";
-        if (all || state !== "seen") result.fresh.push({ project: id, state, line });
+        let t3 = "";
+        // Opt in with config.security_read.enabled: a new or changed pull request in a security area is tagged with where the security read stands for its head.
+        if ((all || state !== "seen") && config.security_read?.enabled === true) {
+          try {
+            const login = securityLoginOf(config);
+            const s = login ? t3Status({ gh, repo, number: p.number, headSha: p.headRefOid, securityLogin: login, areas: compileAreas(config.security_read.areas ?? {}) }) : null;
+            if (s && s.status !== "NOT_T3") t3 = `security areas [${s.areas.join(", ")}], security read: ${s.status} (${T3_HINT[s.status]})`;
+          } catch (e) { result.errors.push(`${key}: security-read check failed: ${e.message}`); }
+        }
+        if (all || state !== "seen") result.fresh.push({ project: id, state, line, ...(t3 ? { t3 } : {}) });
       }
     }
     if (save && !gh.dryRun) writeState(stateDir, file, next);
@@ -60,7 +71,7 @@ export function prWatch({ config, projectId, gh, stateDir = ".state", all = fals
 
 export function formatPrWatch(r) {
   const out = [];
-  out.push(r.fresh.length ? `${r.fresh.length} pull request(s) to review:\n${r.fresh.map((f) => `${f.state.padEnd(7)} ${f.line}`).join("\n")}` : "No new or changed pull requests.");
+  out.push(r.fresh.length ? `${r.fresh.length} pull request(s) to review:\n${r.fresh.map((f) => `${f.state.padEnd(7)} ${f.line}${f.t3 ? `\n        ${f.t3}` : ""}`).join("\n")}` : "No new or changed pull requests.");
   if (r.other.length) out.push(`\nNot reviewed here (dependency bots and skipped titles): ${r.other.length}`);
   for (const s of r.skipped) out.push(`skipped ${s}`);
   for (const e of r.errors) out.push(`ERROR ${e}`);

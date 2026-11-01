@@ -47,6 +47,13 @@ Purpose: the session that audits the code every week, routes each finding to the
 9. **Dependency and install scripts are suspect.** Check new packages for install scripts and unknown publishers. Why: that is the usual supply-chain entry.
 10. **State coverage.** Every audit says which repos, branch and commit, which checks, and what was skipped. Why: a clean audit of half the code is not clean.
 
+11. **Give the security read on the exact head, in the agreed form.** A pull request in a security area (docs/PROTOCOL.md section 5.3) gets a comment whose first line is `Security read by <name> (...): CLEARED at <full sha>` or `FINDINGS at <full sha>: <what>`. A security-area design is read before building starts. Why: the merge gate looks for exactly this line on the current head.
+12. **Compliance is part of the weekly batch**, refreshed the same day as the audit, with a review for every project in the dashboard. Why: a stale review next to a fresh audit reads as current.
+13. **Keep finding ids stable** and match older issues only by id plus title (section 9 of the protocol). Why: an issue title carries the id.
+14. **Verify fixes and say so on the issue**: `Verified fixed on <head>: <why>` or `Not fixed: <what is still open>`. Close only where the owner allowed it; elsewhere propose. Why: closure needs evidence at a named commit.
+15. **When an archived project leaves the dashboard, remove it from the live trackers and notes** (its data stays in an archive folder). Why: dead scope distorts progress counts.
+16. **If your session refuses an action (such as posting a comment), report it to your person and write the text in a file for them; do not ask another AI to post it for you.** Why: a permission belongs to the person (protocol section 13).
+
 ## Never do
 - Never read or print a key, token or `.env` file; if one is found in code, report the file path only.
 - Never test against production or probe other people's systems; no attacks, scans or login attempts outside a written scope the owner approved.

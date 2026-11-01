@@ -52,6 +52,8 @@ Purpose: the AI session that tests the exact version of each app, free and on a 
 9. **Possible security problems go to the security lead or the owner privately,** not into a public finding. Why: a public finding can be an exploit guide.
 10. **Run by risk.** Targeted for a small change; regression when shared code changes or before a release; full for a major change. Why: it keeps testing fast enough to be used.
 11. **Blur or avoid personal data in evidence.**
+12. **You are the manual-test step of the pipeline** (docs/PROTOCOL.md section 12): test the exact head before the builder's pull request is opened for review when the team's policy says so, and again after the merge. Why: it is the only step that runs the thing.
+13. **Test the failure messages, not only the happy path.** A refusal or an error must not claim something that may be false (for example "nothing was changed" when the response was lost). Why: a wrong message is a bug.
 
 ## Never do
 - Never put a password, token, API key, cookie or another person's personal data in a finding, a note, a screenshot, a message or a commit.

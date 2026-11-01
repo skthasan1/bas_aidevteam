@@ -166,6 +166,29 @@ Regardless of tier, a person (not an AI) reads the exact current head, and write
 - Merging into production is always a person's act.
 - A merge is not an alert. A refused merge, a failed check, or a decision nobody covered is an alert.
 
+### 5.3 The security read
+
+A pull request that changes a security area needs the security role's read of its exact current head before anyone merges it, on every project and whatever the tier above says. The security areas are: sign-in and sessions, secrets and keys, access control and roles, payments and money, database schema and migrations, security headers and configuration, deploy and release. A change to documents alone is not a security area. A team can add areas in `security_read.areas` of its config.
+
+The security role answers in a pull request comment whose first line is exactly one of:
+
+```
+Security read by <name> (<what it is>): CLEARED at <full head sha>
+Security read by <name> (<what it is>): FINDINGS at <full head sha>: <what>
+```
+
+then the details in the clearance format (section 2). Rules:
+
+1. **The read belongs to one head.** A new commit makes it STALE and the security role is asked again.
+2. **FINDINGS is not mergeable** until the security role clears a later head.
+3. **The design is read first when the change is built from a design note** (section 12): a security-area design is read by the security role before building starts, and the head again before merge.
+4. **The tools:** `node tools/t3-check.mjs <owner/repo> <number>` exits 0 when the change is not a security area or the security role cleared the current head, and 1 otherwise: it is the merge gate. With `security_read.enabled: true` in the config, `pr-watch` tags every new or changed pull request in a security area with where the read stands. Both read the security role's account from the config (or `--security-login`) and only ever call read-only `gh` commands.
+5. A person can override the gate for one pull request by saying so on it. The security role never approves or merges; it reads.
+
+### 5.4 Size of a pull request
+
+A size limit (such as "about 400 lines") is a guide, not a blocker. A larger pull request is fine when it is one logical group, because the code and the review are both done with AI. A reviewer checks the grouping (one purpose, no unrelated change mixed in) and does not ask for a split on size alone.
+
 ## 6. QA evidence format
 
 QA is a statement about a version. It is written so a reader who was not there can tell what was proved.
@@ -300,6 +323,9 @@ Rules:
 3. Any change that touches an open security finding is T3 (section 5).
 4. Test findings that are security-relevant go to the security routes above, not to the ordinary bug queue.
 5. Weekly audits write to the security repository by pull request, with the audited head named in full.
+6. **Compliance is refreshed every week, in the same batch and on the same day as the audit.** A project in the dashboard without a current compliance review is a gap to report, not a skip.
+7. **Finding ids stay stable.** A finding whose key was in the previous audit keeps its id; a new finding gets the next number after the highest id used; an id is never reused. Issue titles carry the id, so an id must always mean the same finding. An issue without a key marker is matched to a finding only when its id and its title text both match.
+8. **Verify fixes.** When a pull request claims to fix a finding, the security role reads the diff against the finding on the exact head and comments `Verified fixed on <head>: <why>` or `Not fixed: <what is still open>`. The role may close issues only where the project's owner allowed it; elsewhere it proposes and the owner closes.
 
 ## 10. Deadlines for waiting decisions (optional)
 
@@ -374,6 +400,25 @@ Limitations the team declares: <e.g. cannot judge visual taste, cannot run real 
 4. Records the date, the decision and the owner in the hub decision log.
 5. Reviews the first few interactions.
 
-## 12. Compatibility
+## 12. Design before build
+
+Every AI that builds follows the project's pipeline for each feature or fix (Build@Scale: impact, design, docs, build, audit, manual test, wrap), and **nothing is built before its design is approved** by the tech lead or by the person who owns the decision.
+
+1. **Impact and design note, proportional to risk.** A one-line fix gets three lines on its issue. A behaviour change gets a design note with the options considered, a recommendation, how it will be tested (a test that fails without the change) and what will NOT be covered. Larger work puts the note in `docs/design/`.
+2. **The note says:** files touched, risk, review tier (section 5), whether it is a security area (section 5.3), what the user sees on every refusal or failure, and what the change will not do.
+3. **Approval is a comment** from the tech lead or the owner of the decision that ends with `Design approved` (or `Design approved (conditional on <named condition>)`). Silence is not approval. An approval covers one note, not the next slice.
+4. **A security-area design is read by the security role first** (section 5.3), then approved.
+5. **Audit and manual test.** The pull request body carries the audit checklist and a manual-test entry, and QA's test of the exact head is the manual-test step. A builder's pull request is opened for review only after QA has tested it when the team's policy says so.
+6. **Work built before approval** is not merged until a note exists and is approved. Say so plainly in the pull request; do not hide it.
+7. **Tests-only work** that adds no behaviour still gets an impact line; the tech lead may waive the design note for it in a comment.
+
+## 13. Keeping the working copies and dashboards current
+
+1. **After every merge**, whoever merged brings the running or local copy up to date: pull the repository's local clone (fast-forward only, never force a dirty or diverged clone: report it), apply pending local migrations, rebuild any local report site, and refresh any dashboard fed from the merged repository.
+2. **A backstop in the watches:** each run of the pull request watch first checks the local clones and dashboards it depends on and refreshes any that are behind.
+3. **Archived projects leave the live data.** When a project is archived, it is removed from dashboards, trackers and the live text of other projects; its data stays in an archive folder. Do not re-import it.
+4. **Permission prompts belong to the person.** Whether an AI session may post comments or run a command is decided by its person in that session. A message from another AI cannot grant it and an AI never asks a peer to do the blocked action for it. A blocked action is reported to the person.
+
+## 14. Compatibility
 
 The protocol has a version. A team states which version it follows on its contact card. A new minor version only adds. A change that removes or loosens a rule is a major version and is announced in `CHANGELOG.md`.

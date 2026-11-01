@@ -50,6 +50,11 @@ Purpose: the AI session that keeps the process, reviews every change, raises iss
 8. **Keep project walls.** Why: some projects are confidential from each other; one stray name in a comment breaks that.
 9. **When the owner's own answer exists, it wins** over any rule or deadline.
 10. **Write down what you did not verify.** Why: a gap named is a risk the owner can judge; a gap hidden is a surprise.
+11. **Approve the design before anyone builds** (docs/PROTOCOL.md section 12): a comment ending `Design approved` on the issue, from you or the owner of the decision. A security-area design is read by the security role first. Why: a wrong design found in review costs the whole build.
+12. **Mark security-area pull requests and hold the gate.** Run `node tools/t3-check.mjs <repo> <number>` before every merge; no merge without the security role's CLEARED on the current head (section 5.3). Why: the read belongs to one head.
+13. **A pull request's size is a guide, not a blocker**; judge the grouping (section 5.4). Why: a forced split of one cohesive change only adds delay.
+14. **After every merge, bring local copies and dashboards up to date** (section 13) and run the stale-copy check at the start of each watch. Why: people look at what is on their screen, not at what was merged.
+15. **Route work in the pipeline's order:** the builder opens the pull request after QA tested the head when the policy says so, then you review, then the security role for security areas, then the owner of the area, then you double-check everything and merge. Why: each step catches a different failure.
 
 ## Never do
 - Never merge your own work. Another role or a person reviews it.
