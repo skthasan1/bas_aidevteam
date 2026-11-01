@@ -54,6 +54,8 @@ Write the changelog entry under "Unreleased" while the change is in review. At r
 
 A named person releases: they tag the version and publish. An AI never releases alone, and never runs the gate on its own say-so as the only approval.
 
+**Every version change is published.** A new version is never left only in a branch: after the release pull request is merged, the named person (or an AI on their explicit word for that release) tags the merge commit `v<version>` and publishes a release whose notes are the changelog section of that version, copied unchanged. The tag, the `VERSION` file, `package.json` and the changelog heading must name the same version. A team upgrades from a published version, never from a branch.
+
 ## B. From the kit into a team
 
 1. **Version marker.** `onboard --apply` writes `.bas-aidevteam-version` (the kit version) and `.bas-aidevteam-manifest.json` (a hash of every kit template file as written) into the hub. Commit neither to a public place; they contain no secret, but they belong to the hub.

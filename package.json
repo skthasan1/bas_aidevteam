@@ -1,6 +1,6 @@
 {
   "name": "bas-aidevteam",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Build@Scale AI Dev Team: roles, hub, protocol and tools for a small accountable AI team.",
   "type": "module",
   "private": true,

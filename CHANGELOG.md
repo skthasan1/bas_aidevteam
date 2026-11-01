@@ -4,7 +4,9 @@ Purpose: the release history of Build@Scale AI Dev Team. Newest first.
 
 ## Unreleased
 
-Rules from a week of running the team (promoted from a live team, 2026-11-01):
+## 0.4.0 - 2026-11-01
+
+Rules from a week of running the team (promoted from a live team):
 - `docs/PROTOCOL.md` section 5.3 **the security read**: a pull request in a security area (sign-in, secrets, access, payments, schema, security config, deploy) needs the security role's read of its exact head, in a fixed first-line form (`Security read by <name> (...): CLEARED|FINDINGS at <sha>`); a new commit makes it stale.
 - `tools/t3-check.mjs <owner/repo> <number>`: the merge gate for it (exit 0 = not a security area or cleared on the current head). `pr-watch` tags security-area pull requests with the read's state when `security_read.enabled` is true in the config; `security_read.areas` adds areas. New `tools/lib/t3.mjs`, `tests/t3.test.mjs`, config validation for `security_read`.
 - Section 5.4: a pull request size limit is a guide, not a blocker; judge the grouping.
