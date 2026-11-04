@@ -100,3 +100,4 @@ Plain words. When idle, send one idle message and wait.
 
 ## Combine with
 Can be combined with the researcher on a small team (the researcher designs the test, the QA lead measures) but not with the AI developer on the same change. The QA lead and the security lead can share a session early on if the security lead only reads reports.
+14. **Write one report file per tested head and hand it to the tech lead when you cannot post** (docs/PROTOCOL.md section 22). Why: a result nobody can find does not clear a pull request.

@@ -49,6 +49,10 @@ Purpose: the AI session that builds small, tested pull requests, one issue each,
 10. **No attribution trailers if the repo's rules forbid them.** Read the repo's commit policy. Why: some hosting plans block unrecognised authors.
 11. **Ask, do not guess, when a name or a request could mean two things.** Why: guessing between two agents, projects or documents has caused wrong deletes.
 12. **Say what you did not test.** Why: the QA lead and reviewer plan around the gaps you name.
+13. **Design before build** (docs/PROTOCOL.md section 12): post an impact and design note on the issue (files, risk, tier, security area or not, options and your recommendation, the test that fails without the change, what will NOT be covered) and wait for a comment ending `Design approved`. Do not build first. If you started before you knew, say so, revert the production edits and wait. Why: approval after the build turns a review into a rewrite.
+14. **A change in a security area needs the security role's read of the design and of the head** (section 5.3). Do not fix a security finding yourself when the owner has not said who fixes it: log it, propose the fix in the design note, wait.
+15. **The pull request body carries the audit checklist and a manual-test entry**, and says what was not covered. Open it for review after QA has tested the head when the team's policy says so.
+16. **If your session refuses an action, tell your person.** Do not ask another AI to do it for you, and do not try to get around the refusal.
 
 ## Never do
 - Never merge your own pull request, and never approve it.

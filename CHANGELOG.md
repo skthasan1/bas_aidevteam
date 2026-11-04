@@ -4,7 +4,22 @@ Purpose: the release history of Build@Scale AI Dev Team. Newest first.
 
 ## Unreleased
 
-## 0.4.0 - 2026-11-01
+## 0.5.0 - 2026-11-04
+
+Process rules from a team running with six AI roles and four projects for a week (this release also carries the 0.4.0 changes below, which were prepared but never published separately).
+
+Added to `docs/PROTOCOL.md` (sections 15 to 22):
+- 15 **Closing issues**: the raiser closes, closing can be reserved to named roles, a fix on the integration branch is not a release, AI-raised issues say who raised them and carry a severity.
+- 16 **Who may merge, and the waiting rule**: with the owner's approval; a second developer when the owner is away; the tech lead into the integration branch after a stated number of hours; a hold from the owner always wins; a decision-clock record.
+- 17 **Merge only the head that was reviewed**: the head is pinned in the merge command.
+- 18 **Dependency-bot pull requests**: never auto-approved, majors reviewed on their own, group updates split, conflicted ones rebased first.
+- 19 **Paid actions and spend**: typed approval per action in the session that spends, a daily limit, a ledger.
+- 20 **A shared machine and shared instances**: port blocks and a container registry, scratch environments, ask before changing a tested instance, resource pauses (memory starvation looks like a hang), a freeze file, a narrow reviewed setting instead of bypassing a security control, an instance that follows the integration branch by a scheduled script.
+- 21 **Keeping private things out of messages and public places**: no ids or secret values in comments, encrypted secrets in databases, local development databases.
+- 22 **Watchers, and pausing them**: three read-only watchers, prompts kept in a file so they can be recreated, say nothing when nothing is new, idle roles ask the tech lead, a QA role without write access reports through the tech lead, and review work is counted.
+- Roles: tech-lead rules 16 to 19 and qa-lead rule 14 follow from the above.
+
+## 0.4.0 - 2026-11-01 (prepared, shipped inside 0.5.0)
 
 Rules from a week of running the team (promoted from a live team):
 - `docs/PROTOCOL.md` section 5.3 **the security read**: a pull request in a security area (sign-in, secrets, access, payments, schema, security config, deploy) needs the security role's read of its exact head, in a fixed first-line form (`Security read by <name> (...): CLEARED|FINDINGS at <sha>`); a new commit makes it stale.

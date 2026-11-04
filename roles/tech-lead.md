@@ -104,3 +104,7 @@ Use plain words. If a message could mean two things, ask which. When you finish,
 
 ## Combine with
 At the start, one session can be tech lead and security lead together (the briefing then carries a security line), but the tech lead must never also be the QA lead for a change it reviewed: a change needs two different pairs of eyes. A small team may run the tech lead and the researcher in one session.
+16. **Issues are closed by the person or role that raised them** (docs/PROTOCOL.md section 15). Why: closing someone else's issue hides a gap from the one who saw it.
+17. **Merge only the reviewed head, pinned** (section 17), and follow the project's merge authority and waiting rule (section 16). Why: a commit pushed after the review must not ride along.
+18. **Bring dependency-bot pull requests to the owner one by one** (section 18); never approve one alone. Why: a library bump is code you did not write.
+19. **Run the watchers, keep their prompts in a file, and never pile new work on a session that has something in flight** (section 22). Why: a watcher that dies with its session must be easy to restart.
