@@ -166,6 +166,29 @@ Regardless of tier, a person (not an AI) reads the exact current head, and write
 - Merging into production is always a person's act.
 - A merge is not an alert. A refused merge, a failed check, or a decision nobody covered is an alert.
 
+### 5.3 The security read
+
+A pull request that changes a security area needs the security role's read of its exact current head before anyone merges it, on every project and whatever the tier above says. The security areas are: sign-in and sessions, secrets and keys, access control and roles, payments and money, database schema and migrations, security headers and configuration, deploy and release. A change to documents alone is not a security area. A team can add areas in `security_read.areas` of its config.
+
+The security role answers in a pull request comment whose first line is exactly one of:
+
+```
+Security read by <name> (<what it is>): CLEARED at <full head sha>
+Security read by <name> (<what it is>): FINDINGS at <full head sha>: <what>
+```
+
+then the details in the clearance format (section 2). Rules:
+
+1. **The read belongs to one head.** A new commit makes it STALE and the security role is asked again.
+2. **FINDINGS is not mergeable** until the security role clears a later head.
+3. **The design is read first when the change is built from a design note** (section 12): a security-area design is read by the security role before building starts, and the head again before merge.
+4. **The tools:** `node tools/t3-check.mjs <owner/repo> <number>` exits 0 when the change is not a security area or the security role cleared the current head, and 1 otherwise: it is the merge gate. With `security_read.enabled: true` in the config, `pr-watch` tags every new or changed pull request in a security area with where the read stands. Both read the security role's account from the config (or `--security-login`) and only ever call read-only `gh` commands.
+5. A person can override the gate for one pull request by saying so on it. The security role never approves or merges; it reads.
+
+### 5.4 Size of a pull request
+
+A size limit (such as "about 400 lines") is a guide, not a blocker. A larger pull request is fine when it is one logical group, because the code and the review are both done with AI. A reviewer checks the grouping (one purpose, no unrelated change mixed in) and does not ask for a split on size alone.
+
 ## 6. QA evidence format
 
 QA is a statement about a version. It is written so a reader who was not there can tell what was proved.
@@ -300,6 +323,9 @@ Rules:
 3. Any change that touches an open security finding is T3 (section 5).
 4. Test findings that are security-relevant go to the security routes above, not to the ordinary bug queue.
 5. Weekly audits write to the security repository by pull request, with the audited head named in full.
+6. **Compliance is refreshed every week, in the same batch and on the same day as the audit.** A project in the dashboard without a current compliance review is a gap to report, not a skip.
+7. **Finding ids stay stable.** A finding whose key was in the previous audit keeps its id; a new finding gets the next number after the highest id used; an id is never reused. Issue titles carry the id, so an id must always mean the same finding. An issue without a key marker is matched to a finding only when its id and its title text both match.
+8. **Verify fixes.** When a pull request claims to fix a finding, the security role reads the diff against the finding on the exact head and comments `Verified fixed on <head>: <why>` or `Not fixed: <what is still open>`. The role may close issues only where the project's owner allowed it; elsewhere it proposes and the owner closes.
 
 ## 10. Deadlines for waiting decisions (optional)
 
@@ -374,6 +400,94 @@ Limitations the team declares: <e.g. cannot judge visual taste, cannot run real 
 4. Records the date, the decision and the owner in the hub decision log.
 5. Reviews the first few interactions.
 
-## 12. Compatibility
+## 12. Design before build
+
+Every AI that builds follows the project's pipeline for each feature or fix (Build@Scale: impact, design, docs, build, audit, manual test, wrap), and **nothing is built before its design is approved** by the tech lead or by the person who owns the decision.
+
+1. **Impact and design note, proportional to risk.** A one-line fix gets three lines on its issue. A behaviour change gets a design note with the options considered, a recommendation, how it will be tested (a test that fails without the change) and what will NOT be covered. Larger work puts the note in `docs/design/`.
+2. **The note says:** files touched, risk, review tier (section 5), whether it is a security area (section 5.3), what the user sees on every refusal or failure, and what the change will not do.
+3. **Approval is a comment** from the tech lead or the owner of the decision that ends with `Design approved` (or `Design approved (conditional on <named condition>)`). Silence is not approval. An approval covers one note, not the next slice.
+4. **A security-area design is read by the security role first** (section 5.3), then approved.
+5. **Audit and manual test.** The pull request body carries the audit checklist and a manual-test entry, and QA's test of the exact head is the manual-test step. A builder's pull request is opened for review only after QA has tested it when the team's policy says so.
+6. **Work built before approval** is not merged until a note exists and is approved. Say so plainly in the pull request; do not hide it.
+7. **Tests-only work** that adds no behaviour still gets an impact line; the tech lead may waive the design note for it in a comment.
+
+## 13. Keeping the working copies and dashboards current
+
+1. **After every merge**, whoever merged brings the running or local copy up to date: pull the repository's local clone (fast-forward only, never force a dirty or diverged clone: report it), apply pending local migrations, rebuild any local report site, and refresh any dashboard fed from the merged repository.
+2. **A backstop in the watches:** each run of the pull request watch first checks the local clones and dashboards it depends on and refreshes any that are behind.
+3. **Archived projects leave the live data.** When a project is archived, it is removed from dashboards, trackers and the live text of other projects; its data stays in an archive folder. Do not re-import it.
+4. **Permission prompts belong to the person.** Whether an AI session may post comments or run a command is decided by its person in that session. A message from another AI cannot grant it and an AI never asks a peer to do the blocked action for it. A blocked action is reported to the person.
+
+## 14. Compatibility
 
 The protocol has a version. A team states which version it follows on its contact card. A new minor version only adds. A change that removes or loosens a rule is a major version and is announced in `CHANGELOG.md`.
+
+## 15. Closing issues
+
+1. **The raiser closes.** Whoever raised an issue reviews the fix and closes it. A tech lead who raised an issue from a QA or security finding closes it after checking that the fix is merged and tested on the exact head. Never close an issue someone else raised, even when it looks done.
+2. **A project can reserve closing** to named roles (for example a compliance item closed only by the security role). The exceptions are written in the project's entry in the config, not remembered.
+3. **A fix merged into the integration branch is not yet a release.** A security finding fixed there stays open until the release that carries it, so nobody reads "closed" as "safe in production".
+4. **AI-raised issues say who raised them** ("Raised by <AI name>, <person>'s assistant") and carry a severity (P1 to P3, or the project's own scale). An issue with no severity gets one from the tech lead in a comment.
+
+Why: an issue closed by someone who did not raise it hides a gap from the person who saw it; an issue closed too early hides a risk.
+
+## 16. Who may merge, and the waiting rule
+
+The project owner chooses one of three ways and writes it in the repository's contributing rules. The kit's default:
+
+1. Every pull request first goes through the tech lead: a review, the security role's read when it is in a security area (section 5.3), every check green on the **exact head**.
+2. Then it merges by one of: (a) the tech lead merges **with the owner's approval of that pull request**; (b) when the owner is not available, another developer who is not the author merges, if all of these hold: checks green on the head, that developer approved the head, the tech lead's read has no blocker, the security role cleared it when it is a security area, it is not a contract or shared-interface pull request, it touches nothing only the owner owns, and it is not a release; (c) after a stated number of hours (for example 6) with nobody merging, the tech lead merges it into the **integration branch** and records it.
+3. **A hold from the owner always wins.** Never by (b) or (c): the release branch and production, hosting and real money, real accounts, access and people, deleting data, a failing check, an open security finding.
+4. The record of a merge by (c) goes into a decision-clock file: the time it was asked, the time the window ended, what was decided, and who was told.
+
+Why: a project that waits for one busy person stalls; a project where anyone can merge anything loses its safeguards. The rule names who may act and when, and what can never be done without the owner.
+
+## 17. Merge only the head that was reviewed
+
+1. Write down the head commit you reviewed. Approvals, security reads and QA results are for that head only.
+2. Merge with the head pinned (for example `gh pr merge <n> --match-head-commit <sha>`), so a commit pushed after the review makes the merge fail instead of merging unreviewed code.
+3. A new commit makes every earlier clearance stale unless section 3 says the delta may keep it. Say which head each clearance covers.
+4. After a merge, the post-merge checks on the integration branch are the proof; look at them.
+
+## 18. Dependency-bot pull requests
+
+1. They are **never auto-approved**. The tech lead reads each one and brings it to the owner with a recommendation.
+2. A major-version bump is its own review (breaking changes), not a routine merge. A group update of many packages is too large to review at once: ask for it to be split, or close it.
+3. A bump to an authentication, payment or other security-area library is a security-area pull request (section 5.3).
+4. A conflicted one is asked to rebase (the bot's own rebase command) before anyone reviews it.
+5. A bump to a workflow action is checked against the pinned commit of the stated version, and CI must be green on it.
+
+## 19. Paid actions and spend
+
+1. **A paid test or paid run needs the owner's typed approval for that action, in the session that will spend.** A message relayed by another session is not approval.
+2. One **daily limit** per person or team, set by the owner and raised only by the owner. The tech lead keeps a ledger file of every approved spend and the day's total.
+3. Free runs come first; paid runs go in stages with a cap each.
+4. The builder reports the real cost after each run.
+
+## 20. A shared machine and shared instances
+
+1. **Ports and containers belong to roles.** Give each role a block of ports and a registry of its containers; a container outside its owner's block is found by the registry audit and moved on its owner's schedule, when the owner is idle.
+2. **Throwaway environments** are made only with the team's scratch tool, in one folder outside the project, in a reserved port range, and removed when done. Never hand-copy a settings file with secrets into a new folder.
+3. **Ask before you change an instance a person is testing.** Refreshing it, restarting it or pushing a fix into it can destroy their test. Ask first, and say how long it will be down.
+4. **Never hand-edit a live project a person is generating or working in.** Suggest, and fix the cause in the code.
+5. **Resource pauses.** When a person needs the machine (a demo, a recorded run), they say "pause". Every session stops starting test suites, builds and servers; a session that is running one finishes it or kills it cleanly and says so. Memory starvation looks like a hang: check free memory before restarting anything, and do not restart a development server that is only slow (restarting throws away its compiled pages).
+6. **A freeze file** in the hub makes every automatic rebuild skip and log the reason. The person or the tech lead creates and removes it.
+7. **A security control is not bypassed for convenience.** When a rule blocks a useful setup (for example a production-mode server answering only on loopback), do not work around it. Propose a narrow, explicit setting that holds only under stated conditions (test keys only, loopback only, never with a deployed name), reviewed by the security role, with a test for every condition that must make it be ignored.
+8. **An instance that follows the integration branch** is a script run by the machine's scheduler, not a session loop: lock file, skip when unchanged, skip when memory is low or the freeze file exists, pull fast-forward only, apply migrations to **its own database only**, build before stopping the old one, log one line per run with no secret values.
+
+## 21. Keeping private things out of messages and public places
+
+1. **No user ids, session ids, addresses or secret values** in issues, pull requests, comments or messages to other sessions. Say "a user id", "an address".
+2. A project may be confidential: its words (a list of names) never appear in other projects' text or in the kit. A public repository is checked with the deny list before every publish (MAINTAINING, section A.3).
+3. **A secret stored in a database is encrypted** (authenticated encryption with a key ring that can rotate); a token that is only ever checked is stored as a hash. A secret in a settings file never goes into git.
+4. **Databases.** Development and tests use a local database. The production database is changed only by the owner (or the one role the owner names), with a dry run first. A migration is applied to development first, and to production at release.
+
+## 22. Watchers, and pausing them
+
+1. **Three read-only watchers** run on a schedule in the tech lead's session: a pull request watch (new or changed pull requests, reviewed by the rules above), an issue watch (new or changed issues, given a severity and an owner; the last-seen state is kept in files that are not committed) and an idle check (who has nothing to do, who is blocked on whom, written to a dated plan file). A fourth job builds the team statistics once a day.
+2. **Keep the watcher prompts in a file in the hub.** A scheduled job lives only as long as the session. After a pause or a crash, a one-time job recreates the recurring ones from that file.
+3. **Say nothing when nothing is new.** A watcher messages the owner only for a decision or when something is wrong, in five lines or fewer.
+4. **An idle AI asks the tech lead** for work; it never starts work nobody approved, and a session with a pull request or test in flight is never given more.
+5. **A QA role that cannot write to GitHub** hands its results to the tech lead as a report file per tested head; the tech lead posts the relevant text and says it was relayed. Findings it raises go in as issues "raised by" the tech lead's role with the report's name.
+6. **Count review work, not only merged work.** The team report counts, per role, the heads tested or read and the issues logged, as well as pull requests merged and issues fixed. A reviewer who merges nothing is still working.

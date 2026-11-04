@@ -172,6 +172,19 @@ export function validateConfig(raw) {
     }
   }
 
+  // Optional security read (docs/PROTOCOL.md section 5.3): turns on the security-area tag in pr-watch and sets the areas that need a read.
+  if (raw.security_read !== undefined) {
+    const s = raw.security_read;
+    if (!isObj(s)) errors.push("security_read must be an object {enabled, areas}");
+    else {
+      if (s.enabled !== undefined && typeof s.enabled !== "boolean") errors.push("security_read.enabled must be true or false");
+      if (s.areas !== undefined) {
+        if (!isObj(s.areas)) errors.push("security_read.areas must be an object of area name to regular expression");
+        else for (const [k, v] of Object.entries(s.areas)) if (typeof v !== "string" || !regexOk(v)) errors.push(`security_read.areas.${k}: not a valid regular expression`);
+      }
+    }
+  }
+
   // Optional runner for headless runs: the command (never run through a shell), its fixed arguments and how the prompt is handed over.
   let runner;
   if (raw.runner !== undefined) {

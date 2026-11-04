@@ -4,6 +4,31 @@ Purpose: the release history of Build@Scale AI Dev Team. Newest first.
 
 ## Unreleased
 
+## 0.5.0 - 2026-11-04
+
+Process rules from a team running with six AI roles and four projects for a week (this release also carries the 0.4.0 changes below, which were prepared but never published separately).
+
+Added to `docs/PROTOCOL.md` (sections 15 to 22):
+- 15 **Closing issues**: the raiser closes, closing can be reserved to named roles, a fix on the integration branch is not a release, AI-raised issues say who raised them and carry a severity.
+- 16 **Who may merge, and the waiting rule**: with the owner's approval; a second developer when the owner is away; the tech lead into the integration branch after a stated number of hours; a hold from the owner always wins; a decision-clock record.
+- 17 **Merge only the head that was reviewed**: the head is pinned in the merge command.
+- 18 **Dependency-bot pull requests**: never auto-approved, majors reviewed on their own, group updates split, conflicted ones rebased first.
+- 19 **Paid actions and spend**: typed approval per action in the session that spends, a daily limit, a ledger.
+- 20 **A shared machine and shared instances**: port blocks and a container registry, scratch environments, ask before changing a tested instance, resource pauses (memory starvation looks like a hang), a freeze file, a narrow reviewed setting instead of bypassing a security control, an instance that follows the integration branch by a scheduled script.
+- 21 **Keeping private things out of messages and public places**: no ids or secret values in comments, encrypted secrets in databases, local development databases.
+- 22 **Watchers, and pausing them**: three read-only watchers, prompts kept in a file so they can be recreated, say nothing when nothing is new, idle roles ask the tech lead, a QA role without write access reports through the tech lead, and review work is counted.
+- Roles: tech-lead rules 16 to 19 and qa-lead rule 14 follow from the above.
+
+## 0.4.0 - 2026-11-01 (prepared, shipped inside 0.5.0)
+
+Rules from a week of running the team (promoted from a live team):
+- `docs/PROTOCOL.md` section 5.3 **the security read**: a pull request in a security area (sign-in, secrets, access, payments, schema, security config, deploy) needs the security role's read of its exact head, in a fixed first-line form (`Security read by <name> (...): CLEARED|FINDINGS at <sha>`); a new commit makes it stale.
+- `tools/t3-check.mjs <owner/repo> <number>`: the merge gate for it (exit 0 = not a security area or cleared on the current head). `pr-watch` tags security-area pull requests with the read's state when `security_read.enabled` is true in the config; `security_read.areas` adds areas. New `tools/lib/t3.mjs`, `tests/t3.test.mjs`, config validation for `security_read`.
+- Section 5.4: a pull request size limit is a guide, not a blocker; judge the grouping.
+- Section 12 **design before build**: every AI follows the pipeline and nothing is built before a comment ending `Design approved` from the tech lead or the decision's owner (a security-area design is read by the security role first). The old compatibility section is now 14.
+- Section 13: refresh local copies and dashboards after every merge (with a stale-copy check in the watches); archived projects leave the live data; a session's permission prompt belongs to its person, and an AI never asks a peer to do an action it was refused.
+- Section 9 rules 6 to 8: compliance refreshed weekly with the audit, stable finding ids (matched to issues by id plus title), verify fixes on the exact head and close only where the owner allowed it.
+- Roles: tech-lead rules 11 to 15, ai-developer rules 13 to 16, qa-lead rules 12 and 13, security-lead rules 11 to 16 follow from the above.
 - `tools/upgrade.mjs --config <file>`: read the organization config from another place than `<hub>/qa-projects.json` (for a hub whose tools already use a config file elsewhere). It still only reads the config.
 - `docs/IDENTITIES.md`: controls by role on repositories (install scope, what each role may and may not do, who may merge) and the repository rules a person sets once per repository (protected branches, CODEOWNERS on sensitive paths, no Administration for any App, quarterly install review). `SETUP.md` shows these to the person.
 
